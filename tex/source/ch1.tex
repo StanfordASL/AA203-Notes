@@ -97,7 +97,7 @@ In this subsection we will discuss the class of algorithms known as \textit{grad
 \end{equation}
 where if $\nabla f(\bm{x}) \neq 0$, $\bm{d}^k$ is chosen so that 
 \begin{equation}
-    \nabla f(\bm{x})^T d < 0
+    \nabla f(\bm{x})^T \bm{d}^k < 0
 \end{equation}
 and $\alpha > 0$. Typically, the step size $\alpha^k$ is chosen such that 
 \begin{equation}
@@ -109,7 +109,7 @@ We will look at the general class of descent directions of the form
 \begin{equation}
     \bm{d}^k = -D^k \nabla f(\bm{x}^k)
 \end{equation}
-where $D^k > 0$ (note that this guarantees $\nabla f(\bm{x}^k)^T \bm{d}^k$ < 0). 
+where $D^k > 0$ (note that this guarantees $\nabla f(\bm{x}^k)^T \bm{d}^k < 0$). 
 
 \paragraph{Steepest descent, $D^k = I$.} The simplest choice of descent direction is directly following the gradient, and ignoring second order function information. In practice, this often leads to slow convergence and possible oscillation.
 
