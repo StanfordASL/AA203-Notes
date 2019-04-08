@@ -14,6 +14,8 @@ The notation and language used in the control theory and reinforcement learning 
 We write the cost-to-go (negation of the value function) associated with policy $\pol$ at time $t$ and state $\st$ as $\J^\pol_t(\st)$. We will also sometimes refer to the cost-to-go as the value, but in these notes we are always referring to the expected sum of future costs. 
 For an in-depth discussion of the notational and language differences between the artificial intelligence and control theory communities, we refer the reader to \cite{powell2012ai}.
 
+For notational convenience, we will write the Hessian of a function $f(x)$, evaluated at $x^*$, as $\nabla^2 f(x^*)$.
+
 \subsection*{Prerequisites}
 
 While these notes aim to be almost entirely self contained, familiarity with undergraduate level calculus, differential equations, and linear algebra (equivalent to CME 102 and EE 263 at Stanford) are assumed. We will briefly review nonlinear optimization in the first section of these notes, but previous experience with optimization (e.g. EE 364A) will be helpful. Finally, previous experience with machine learning (at the level of CS 229) is beneficial. 

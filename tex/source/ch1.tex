@@ -31,7 +31,7 @@ where $x_i$ denotes the $i$'th coordinate of $\bm{x}$, and
 \begin{equation}
     \frac{\partial f(\bm{x}^*)}{\partial x_i} \leq 0
 \end{equation}
-for all $i$, which is only satisfied by $f(\bm{x}^*) = 0$.  This is referred to as the \textit{first order necessary condition for optimality}. Looking at the second order variation, and noting that $f(\bm{x}^*) = 0$, we expect
+for all $i$, which is only satisfied by $\nabla f(\bm{x}^*) = 0$.  This is referred to as the \textit{first order necessary condition for optimality}. Looking at the second order variation, and noting that $f(\bm{x}^*) = 0$, we expect
 \begin{align}
 f(\bm{x}^* + \Delta \bm{x}) - f(\bm{x}^*) \geq 0
 \end{align}
@@ -42,14 +42,14 @@ and thus
 which implies $\nabla^2 f(\bm{x}^*)$ is positive semidefinite. This is referred to as the \textit{second order necessary condition for optimality}. Stating these conditons formally, 
 
 \begin{theorem}[Necessary Conditions for Optimality (NOC)]
-Let $\bm{x}^*$ be an unconstrained local minimum of $f:\R^n \to \R$ and $f \in C^1$ in an open set $S$ containing $\bm{x}^*$. Then
+Let $\bm{x}^*$ be an unconstrained local minimum of $f:\R^n \to \R$ and $f \in C^1$ in an open set $S$ containing $\bm{x}^*$. Then,
 \begin{equation}
     \nabla f(\bm{x}^*) = 0.
 \end{equation}
 If $f \in C^2$ within $S$, $\nabla^2 f(\bm{x}^*)$ is positive semidefinite. 
 \end{theorem}
 
-Proof is given in Section 1.1 of \cite{bertsekas2016nonlinear}.
+\proof{See section 1.1 of \cite{bertsekas2016nonlinear}}.
 
 \subsubsection{Sufficient Conditions for Optimality}
 
@@ -201,7 +201,7 @@ We will first look at optimization with equality constraints of the form
 \begin{aligned}
 & \underset{\bm{x}}{\min}
 & & f(\bm{x})\\
-& \textrm{s.t.} & & h_i(\bm{x}) = 0, \quad i = 0, \ldots, m
+& \textrm{s.t.} & & h_i(\bm{x}) = 0, \quad i = 1, \ldots, m
 \end{aligned}
 \end{equation*}
 where $f:\R^n \to \R$, $h_i:\R^n \to \R$ are $C^1$. We will write $\bm{h} = [h_1,\ldots, h_m ]^T$. For a given local minimum $\bm{x}^*$, there exist scalars $\lambda_1, \ldots, \lambda_m$ called Lagrange multipliers such that 
@@ -210,7 +210,7 @@ where $f:\R^n \to \R$, $h_i:\R^n \to \R$ are $C^1$. We will write $\bm{h} = [h_1
 \end{equation}
 There are several possible interpretations for Lagrange multipliers. First, note that the cost gradient $f(\bm{x}^*)$ is in the subspace spanned by the constraint gradients at $\bm{x}^*$. Equivalently, $f(\bm{x}^*)$ is orthogonal to the subspace of first order feasible variations 
 \begin{equation}
-    V(\bm{x}^*) = \{\Delta \bm{x} \mid \nabla h_i(\bm{x}^*)^T \Delta \bm{x}, i=0,\ldots,m\}.
+    V(\bm{x}^*) = \{\Delta \bm{x} \mid \nabla h_i(\bm{x}^*)^T \Delta \bm{x}, i=1,\ldots,m\}.
 \end{equation}
 This subspace is the space of variations $\Delta \bm{x}$ for which $\bm{x} = \bm{x}^* + \Delta \bm{x}$ satisfies the constraint $\bm{h}(\bm{x}) = 0$ up to first order. Therefore, at a local minimum, the first order cost variation $\nabla f(\bm{x}^*)^T \Delta \bm{x}$ is zero for all variations $\Delta \bm{x}$ in this space. 
 

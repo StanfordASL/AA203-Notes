@@ -4,6 +4,8 @@
 \usepackage{bm}
 \usepackage{graphicx}
 \usepackage{subcaption}
+\usepackage{accents}
+\usepackage{mathtools}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{corollary}[theorem]{Corollary}
@@ -15,12 +17,15 @@
 \newcommand{\cost}{c}
 \newcommand{\pol}{\pi}
 \newcommand{\st}{\bm{x}}
+\newcommand{\stdot}{\dot{\bm{x}}}
 \newcommand{\ac}{\bm{u}}
 \newcommand{\f}{f}
 \newcommand{\J}{J}
 
 \newcommand{\R}{\mathbb{R}}
 
+\newcommand\munderbar[1]{%
+  \underaccent{\bar}{#1}}
 
 \newcommand{\argmin}{\text{argmin}}
 \newcommand{\argmax}{\text{argmax}}
