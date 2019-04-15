@@ -171,7 +171,7 @@ Rearranging, have
     \J_{k}^*(\st_{k}) = \min_{\ac_{k} \in \R^m} {\Large\{}  
     & \frac{1}{2} \st_k^T (Q_k + A_k^T V_{k+1} A_k) \st_k + \frac{1}{2} \ac_k^T (R_k + B_k^T V_{k+1} B_k) \ac_k\\
     & + \ac_k^T (H_k + B_k^T V_{k+1} A_k)^T \st_k + (\bm{q}_k + A_k^T V_{K+1} \bm{d}_k + A_k^T \bm{v}_{k+1})^T \st_k \nonumber \\
-    & + (\bm{r}_k + B_k^T V_{k+1} \bm{d} + B_k^T \bm{v}_{k+1}) \ac_k + (v_{k+1} + \frac{1}{2} \bm{d}_k^T V_{k+1} \bm{d}_k + \bm{v}_{k+1}^T \bm{d}_k) \nonumber
+    & + (\bm{r}_k + B_k^T V_{k+1} \bm{d}_k + B_k^T \bm{v}_{k+1}) \ac_k + (v_{k+1} + \frac{1}{2} \bm{d}_k^T V_{k+1} \bm{d}_k + \bm{v}_{k+1}^T \bm{d}_k) \nonumber
     {\Large\}}.
 \end{align}
 Solving this minimization problem, we see that our optimal controller takes the form
@@ -304,9 +304,9 @@ where
 Finally, the local backward recursion can be completed by updating the value function terms via
 \begin{align}
     \label{eq:iLQR_V1}
-    V_k &= Q_k - \frac{1}{2} \bm{l}_k^T Q_{\ac \ac, k} \bm{l}_k\\
-    V_{\st_k} &= Q_{\st,k} - L_k^T Q_{\ac \ac, k} \bm{l}_k\\
-    V_{\st \st, k} &= Q_{\st \st,k} - L_k^T Q_{\ac \ac, k} L_k. \label{eq:iLQR_V3}
+    v_k &= Q_k - \frac{1}{2} \bm{l}_k^T Q_{\ac \ac, k} \bm{l}_k\\
+    \bm{v}_{k} &= Q_{\st,k} - L_k^T Q_{\ac \ac, k} \bm{l}_k\\
+    V_{k} &= Q_{\st \st,k} - L_k^T Q_{\ac \ac, k} L_k. \label{eq:iLQR_V3}
 \end{align}
 
 \begin{algorithm}[t]
