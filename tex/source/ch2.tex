@@ -202,8 +202,8 @@ Given this notation, all necessary terms can be computed via the following relat
     % \end{align}
     \begin{align}
         V_k &= Q_{k}  + A_k^T V_{k+1} A_k - L_k^T S_{\ac \ac,k} L_k\\
-        \bm{v}_k &= \bm{q}_k + A_k^T (\bm{v}_{k+1} + V_{k+1} \bm{d}_k) + S_{\ac \st,k} \bm{l}_k + L_k^T (S_{\ac,k} + S_{\ac \ac,k} \bm{l}_k) \\
-        v_k &= v_{k+1} + q_k + \bm{d}_k^T \bm{v}_{k+1} + \frac{1}{2} \bm{d}_k^T V_{k+1} \bm{d}_k + \bm{l}_k^T (S_{\ac,k} + \frac{1}{2} S_{\ac \ac,k} \bm{l}_k)
+        \bm{v}_k &= \bm{q}_k + A_k^T (\bm{v}_{k+1} + V_{k+1} \bm{d}_k) + S_{\ac \st,k} \bm{l}_k \\
+        v_k &= v_{k+1} + q_k + \bm{d}_k^T \bm{v}_{k+1} + \frac{1}{2} \bm{d}_k^T V_{k+1} \bm{d}_k + \frac{1}{2} \bm{l}_k^T S_{\ac,k}
     \end{align}
     \item $\ac^*_{k} =\bm{l}_k +  L_{k} \st_{k}$
     \item $J_k(\st_k) = \frac{1}{2}\st_k^T V_k \st_k + \bm{v}_k^T \st_k + v_k$.
