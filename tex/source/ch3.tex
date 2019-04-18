@@ -58,7 +58,7 @@ The HJB equation is a partial differential equation that, for cost-to-go $J^*(\s
 \begin{theorem}[Sufficiency Theorem]
 Suppose $V(\st,t)$ is a solution to the HJB equation, that $V(\st,t)$ is $C^1$ in $\st$ and $t$, and that
 \begin{align*}
-    0 &= V(\st,t) + \min_{\ac \in \mathcal{U}} \left\{ \cost(\st,\ac,t) + (\J^*(\st,t))^T \f(\st,\ac,t) \right\}\\
+    0 &= V_t(\st,t) + \min_{\ac \in \mathcal{U}} \left\{ \cost(\st,\ac,t) + (V_{\st}(\st,t))^T \f(\st,\ac,t) \right\}\\
     V(\st,t_f) &= \cost_f(\st,t_f)\,\, \forall \, \st
 \end{align*}
 Suppose also that $\pi^*(\st,t)$ attains the minimum in this equation for all $t$ and $\st$. Let $\{\st^*(t) \mid t \in [t_0, t_f]\}$ be the state trajectory obtained from the given initial condition $\st(0)$ when the control trajectory $\ac^*(t) = \pi^*(\st^*(t),t), t \in [t_0, t_f]$ is used. Then $V$ is equal to the optimal cost-to-go function, i.e.,
