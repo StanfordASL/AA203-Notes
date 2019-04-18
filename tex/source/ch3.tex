@@ -1,1 +1,154 @@
 \section{The HJB and HJI Equations}
+
+In this section, we will extend the ideas of dynamic programming to the continuous time setting. Restating the continuous time optimal control problem, we assume dynamics
+\begin{equation}
+    \stdot(t) = \f(\st(t),\ac(t),t)
+\end{equation}
+and cost
+\begin{equation}
+    \J(\st(0)) = \cost_f(\st(t_f),t_f) + \int_0^{t_f} \cost(\st(\tau),\ac(\tau),\tau) d\tau.
+\end{equation}
+where $t_f$ is fixed. 
+
+\subsection{The Principle of Optimality in Continuous Time}
+
+\subsubsection{Hamilton-Jacobi-Bellman}
+
+As in the discrete time principle of optimality, consider the tail problem
+\begin{equation}
+    \J(\st(t),\{\ac(\tau)\}_{\tau=t}^{t_f},t) = \cost_f(\st(t_f),t_f) + \int_t^{t_f} \cost(\st(\tau),\ac(\tau),\tau) d\tau
+\end{equation}
+where $t\leq t_f$ and $\st(t)$ is an admissible state value. The optimal solution to this tail problem comes from the functional minimization
+\begin{equation}
+    \J^*(\st(t),t) = \min_{\{\ac(\tau)\}_{\tau=t}^{t_f}} \left\{ \cost_f(\st(t_f),t_f) + \int_t^{t_f} \cost(\st(\tau),\ac(\tau),\tau) d\tau\right\}.
+\end{equation}
+Note, then, that due to the additivity of cost we can split the problem up over time,
+\begin{equation}
+    \J^*(\st(t),t) = \min_{\{\ac(\tau)\}_{\tau=t}^{t_f}} \left\{ \int_t^{t+\Delta t} \cost(\st(\tau),\ac(\tau),\tau) d\tau + \cost_f(\st(t_f),t_f) + \int_{t+\Delta t}^{t_f} \cost(\st(\tau),\ac(\tau),\tau) d\tau\right\}
+\end{equation}    
+which by applying the principle of optimality to the tail cost,
+\begin{equation}
+     \J^*(\st(t),t) = \min_{\{\ac(\tau)\}_{\tau=t}^{t + \Delta t}} \left\{ \int_t^{t+\Delta t} \cost(\st(\tau),\ac(\tau),\tau) d\tau + \J^*(\st(t + \Delta t), t + \Delta t)\right\}.
+\end{equation}
+Let $J^*_t(\st(t),t) = \nabla_t J^* (\st(t),t)$ and $J^*_{\st}(\st(t),t) = \nabla_{\st} J^* (\st(t),t)$. Taylor expanding, we have 
+\begin{align}
+\J^*(\st(t),t) = \min_{\{\ac(\tau)\}_{\tau=t}^{t + \Delta t}} \huge{\{} &\cost(\st(t),\ac(t),t) \Delta t + \J^*(\st(t),t) + (\J_t^*(\st(t),t)) \Delta t \\
+&+ (\J_{\st}^*(\st(t),t))^T (\st(t+\Delta t) - \st(t))  + o(\Delta t) \huge{\}} \nonumber
+\end{align}
+for small $\Delta t$. The first term is a result of Taylor expanding the integral and applying the fundamental theorem of calculus. Note that we can pull $\J^*(\st(t),t)$ out of the minimization over cost, as this quantity will not vary under different choices of future actions. Dividing through by $\Delta t$ and taking the limit $\Delta t \to 0$, we obtain the \textit{Hamilton-Jacobi-Bellman} equation
+\begin{equation}
+    0 = \J^*_t(\st(t),t) + \min_{\ac(t)} \left\{ \cost(\st(t),\ac(t),t) + (\J^*(\st(t),t))^T \f(\st(t),\ac(t),t) \right\}
+\end{equation}
+with terminal condition
+\begin{equation}
+    \J^*(\st(t_f),t_f) = \cost_f(\st(t_f),t_f).
+\end{equation}
+% need to talk more about what this equation is
+For convenience, we will define the Hamiltonian 
+\begin{equation}
+    \ham(\st(t),\ac(t),\J^*_{\st},t) \vcentcolon= \cost(\st(t),\ac(t),t) + (\J_{\st}^*(\st(t),t))^T \f(\st(t),\ac(t),t)
+\end{equation}
+which allow us to compactly write the HJB equation as 
+\begin{equation}
+    0 = \J^*_t(\st(t),t) + \min_{\ac(t)} \left\{ \ham(\st(t),\ac(t),\J^*_{\st},t) \right\}.
+\end{equation}
+
+The HJB equation is a partial differential equation that, for cost-to-go $J^*(\st(t),t)$, will satisfy all time-state pairs $(\st(t),t)$. The previous informal derivation assumed differentiability of $J^*(\st(t),t)$, which we do not know a priori. This assumption is rectified by the following theorem on solutions to the HJB equation. 
+
+\begin{theorem}[Sufficiency Theorem]
+Suppose $V(\st,t)$ is a solution to the HJB equation, that $V(\st,t)$ is $C^1$ in $\st$ and $t$, and that
+\begin{align*}
+    0 &= V(\st,t) + \min_{\ac \in \mathcal{U}} \left\{ \cost(\st,\ac,t) + (\J^*(\st,t))^T \f(\st,\ac,t) \right\}\\
+    V(\st,t_f) &= \cost_f(\st,t_f)\,\, \forall \, \st
+\end{align*}
+Suppose also that $\pi^*(\st,t)$ attains the minimum in this equation for all $t$ and $\st$. Let $\{\st^*(t) \mid t \in [t_0, t_f]\}$ be the state trajectory obtained from the given initial condition $\st(0)$ when the control trajectory $\ac^*(t) = \pi^*(\st^*(t),t), t \in [t_0, t_f]$ is used. Then $V$ is equal to the optimal cost-to-go function, i.e.,
+\begin{equation}
+    V(\st,t) = J^*(\st,t)\,\, \forall\, \st, t.
+\end{equation}
+Furthermore, the control trajectory $\{\ac^*(t)\mid t \in [t_0, t_f]\}$ is optimal..
+\end{theorem}
+
+\begin{proof}
+\cite{bertsekas1995dynamic}, Volume 1, Section 3.2.
+\end{proof}
+
+\subsubsection{Continuous-Time LQR}
+
+As a useful result of the HJB equations, we will derive LQR in continuous time. We aim to minimize 
+\begin{equation}
+    \J(\st(0)) = \frac{1}{2} \st^T(t_f) Q_f \st(t_f) + \frac{1}{2} \int_0^{t_f} \st^T(t) Q(t) \st(t) + \ac^T(t) R(t) \ac(t) dt
+\end{equation}
+subject to dynamics
+\begin{equation}
+    \stdot(t) = A(t) \st(t) + B(t) \ac(t).
+\end{equation}
+As in discrete LQR, we will assume $Q_f, Q(t)$ are positive semidefinite, and $R(t)$ is positive definite. We will also assume $t_f$ is fixed, and the state and action are unconstrained. 
+
+We will write the Hamiltonian, 
+\begin{equation}
+    \ham = \frac{1}{2} \st^T(t) Q(t) \st(t) + \frac{1}{2} \ac^T(t) R(t) \ac(t) + \J^*_{\st}(\st(t),t)^T (A(t) \st(t) + B(t) \ac(t))
+\end{equation}
+which yeilds necessary optimality conditions 
+\begin{equation}
+    0 = \nabla_{\ac} \ham = R(t) \ac(t) + B^T(t) \J^*_{\st}(\st(t),t).
+\end{equation}
+Since $\nabla_{\ac \ac}^2 \ham = R(t) > 0$, the control that satisfies the necessary conditions is the global minimizer. Rearranging, we have
+\begin{equation}
+    \ac^*(t) = - R^{-1}(t) B^T(t) \J^*_{\st}(\st(t),t)
+\end{equation}
+which we can plug back into the Hamiltonian to yield
+\begin{align}
+    \ham &= \frac{1}{2} \st^T(t) Q(t) \st(t) + \frac{1}{2} \J^*_{\st}(\st(t),t)^T B(t) R^{-1}(t) B^T(t) \J^*_{\st}(\st(t),t)\\
+     &\qquad + \J^*_{\st}(\st(t),t)^T A(t) \st(t) - \J^*_{\st}(\st(t),t)^T B(t) R^{-1}(t) B^T(t) \J^*_{\st}(\st(t),t)\nonumber\\
+     &= \frac{1}{2} \st^T(t) Q(t) \st(t) - \frac{1}{2} \J^*_{\st}(\st(t),t)^T B(t) R^{-1}(t) B^T(t) \J^*_{\st}(\st(t),t) + \J^*_{\st}(\st(t),t)^T A(t) \st(t).
+\end{align}
+This gives the HJB equation
+\begin{align}
+    0 &= \J_t^*(\st(t),t) + \frac{1}{2} \st^T(t) Q(t) \st(t) - \frac{1}{2} \J^*_{\st}(\st(t),t)^T B(t) R^{-1}(t) B^T(t) \J^*_{\st}(\st(t),t)\\
+    &\qquad + \J^*_{\st}(\st(t),t)^T A(t) \st(t)\nonumber
+\end{align}
+with boundary condition 
+\begin{equation}
+    \J^*(\st(t_f),t_f) = \frac{1}{2} \st^T(t_f) Q_f \st(t_f).
+\end{equation}
+It may appear as if we are stuck here, as this form of the HJB doesn't immediately yield $J^*(\st(t),t)$. Armed with the knowledge that the discrete time LQR problem has a quadratic cost-to-go, we will cross our fingers and guess a solution of the form
+\begin{equation}
+    J^*(\st(t),t) = \frac{1}{2} \st^T(t) V(t) \st(t).
+\end{equation}
+Substituting, we have
+\begin{align}
+    0 &= \frac{1}{2} \st^T(t) \dot{V}(t) \st(t) + \frac{1}{2} \st^T(t) Q(t) \st(t)\\ 
+    &\qquad- \frac{1}{2} \st^T(t) V(t) B(t) R^{-1}(t) B^T(t) V(t) \st(t) + \st^T(t) V(t) A(t) \st(t)\nonumber
+\end{align}
+Note that we will decompose
+\begin{equation}
+    \st^T(t) V(t) A(t) \st(t) = \frac{1}{2} \st^T(t) V(t) A(t) \st(t) + \frac{1}{2} \st^T(t) A^T(t) V(t) \st(t)
+\end{equation}
+which yields
+\begin{align}
+    0 &= \frac{1}{2} \st^T(t) \left(\dot{V}(t) + Q(t) - V(t) B(t) R^{-1}(t) B^T(t) V(t) + V(t) A(t) + A^T(t) V(t)\right) \st(t).
+\end{align}
+This equation must hold for all $\st(t)$, so 
+\begin{equation}
+    -\dot{V}(t) = Q(t) - V(t) B(t) R^{-1}(t) B^T(t) V(t) + V(t) A(t) + A^T(t) V(t)
+\end{equation}
+with boundary condition $V(t_f) = Q_f$.
+
+Therefore, the HJB PDE has been reduced to a set of matrix ordinary differential equations (the Riccati equation). This is integrated backwards in time to find the full control policy as a function of time. One we have found $V(t)$, the control policy is
+\begin{equation}
+    \ac^*(t) = - R^{-1}(t) B^T(t) V(t) \st(t).
+\end{equation}
+Similarly to the discrete case, the feedback gains tend toward constant in the limit of the infinite horizon problem, under some technical assumptions.
+
+\subsection{Differential Games}
+
+
+
+\subsubsection{Differential Games and Information Patterns}
+
+\subsubsection{Hamilton-Jacobi-Isaacs}
+
+\subsubsection{Reachability}
+
+
+\subsection{Further Reading}

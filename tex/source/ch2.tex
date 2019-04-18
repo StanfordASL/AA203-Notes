@@ -112,7 +112,7 @@ Rearranging, we have
 \end{align}
 Note that this optimization problem is convex in $\ac_{N-1}$ as $R_{N-1} + B_{N-1}^T V_N B_{N-1} > 0$. Therefore, any local minima is a global minima, and therefore we can simply apply the first order optimality conditions. Differentiating,
 \begin{equation}
-    \frac{\partial \J_{N-1}^*(\st_{N-1})}{\partial \ac_{N-1}} = (R_{N-1} + B_{N-1}^T V_N B_{N-1}) \ac_{N-1} + (B_{N-1}^T V_N A_{N-1}) \st_{N-1}
+    \frac{\partial \J_{N-1}^*}{\partial \ac_{N-1}}(\st_{N-1}) = (R_{N-1} + B_{N-1}^T V_N B_{N-1}) \ac_{N-1} + (B_{N-1}^T V_N A_{N-1}) \st_{N-1}
 \end{equation}
 and setting this to zero yields
 \begin{equation}
@@ -160,7 +160,7 @@ The cost-to-go will take the form
 \end{equation} 
 Repeating our approach from the last subsection, we have
 \begin{align}
-\label{eq:LQR_rec_cost}
+\label{eq:LQR_rec_cost2}
     \J_{k}^*(\st_{k}) =  \min_{\ac_{k} \in \R^m} & {\large\{} 
     \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} + \ac_k^T H_k \st_k +\bm{q}_k^T \st_k + \bm{r}_k \ac_k + q_k \\
     &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \bm{d}_k)^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \bm{d}_k) \nonumber \\
