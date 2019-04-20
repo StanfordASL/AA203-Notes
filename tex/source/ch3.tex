@@ -213,7 +213,7 @@ As a result, the agent should aim to maximize $\cost_f$ to avoid $\mathcal{T}$, 
 
 \paragraph{Sets vs. Tubes.} We have so far considered avoidance or reachability problems for which we care about set membership at time $t=0$. However, for something like collision avoidance, we would like to stay collision free at every time as opposed to a particular time. \textit{Backward reachable sets} capture the case in which only the final time set membership matters, and states for times $t<0$ do not matter. \textit{Backward reachable tubes} capture the entire time duration of the problem. Any state that passes through the target at any time in the problem duration is included. This yields a modified value function of the form
 \begin{equation}
-    \J(\st,t) - \min_{\Gamma(\ac)} \max_{\ac} \min_{\tau \in [t,0]} \cost_f(\st(\tau)).
+    \J(\st,t) = \min_{\Gamma(\ac)} \max_{\ac} \min_{\tau \in [t,0]} \cost_f(\st(\tau)).
 \end{equation}
 If the target set membership holds at any time $\tau'$, then $\min_{\tau\in[t,0]} \cost_f(\st(\tau)) \leq \cost_f(\st(\tau')) \leq 0$.
 
