@@ -142,13 +142,83 @@ Similarly to the discrete case, the feedback gains tend toward constant in the l
 
 \subsection{Differential Games}
 
-
+We have so far addressed the case in which we aim to solve the optimal control problem for a single agent. We will now consider an adversarial game setting, in which there exists another player that aims to maximally harm the first agent. In particular, we will consider zero sum games in which the second agent aims to maximize the cost of the first agent. While the differential game setting is not restricted to this case --- agents may have separate cost functions that partially interfere or aid each other --- the zero-sum case lends itself to useful analytical tools. 
 
 \subsubsection{Differential Games and Information Patterns}
 
+We consider the two player differential game with dynamics
+\begin{equation}
+    \stdot(t) = \f(\st(t),\ac(t),\ad(t))
+\end{equation}
+where the first player takes action $\ac(t)$ at time $t$, and the second player takes action $\ad(t)$. The state $\st(t)$ is the joint state of both players. We write the cost as 
+\begin{equation}
+    \J(\st(t)) = \cost_f(\st(0)) + \int_{t}^{0} \cost(\st(\tau),\ac(\tau),\ad(\tau)) d\tau
+\end{equation}
+which the first agent aims to maximize, and the second agent aims to minimize. 
+
+To fully specify the differential game, we must specify what each agent knows, and when. This is referred to as the \textit{information pattern} of the game. In addition to capturing the knowledge of the state available to each agent, the information pattern also captures the knowledge of each other agents' strategies available to each agent. 
+
+% TODO information pattern
+
 \subsubsection{Hamilton-Jacobi-Isaacs}
+
+The key idea in building the multi-agent equivalent of the HJB equation will again be to apply the principle of optimality. We consider the information pattern in which the adversary has access to the instantaneous control action of the first agent, so the cost takes the form
+\begin{equation}
+    \J(\st(t),t) = \min_{\Gamma(\ac)(\cdot)}\,\max_{\ac(\cdot)} \left\{ \int_t^0 \cost(\st(\tau), \ac(\tau),\ad(\tau)) d\tau + \cost_f(\st(0)) \right\}.
+\end{equation}
+Applying the dynamic programming principle, we have 
+\begin{equation}
+    \J(\st(t),t) = \min_{\Gamma(\ac)(\cdot)}\,\max_{\ac(\cdot)} \left\{ \int_t^{t+\Delta t} \cost(\st(\tau), \ac(\tau),\ad(\tau)) d\tau + \J(\st(t+\Delta t),t+\Delta t)\right\}.
+\end{equation}
+We can take the same strategy as with the informal derivation of the HJB equation, and Taylor expand both terms to yield
+\begin{align}
+    \J(\st(t),t) =& \min_{\Gamma(\ac)(\cdot)}\,\max_{\ac(\cdot)} {\large\{} \cost(\st(\tau), \ac(\tau),\ad(\tau))\Delta t + \J(\st(t),t)\\
+    &\qquad + (\J_{\st}(\st(t),t))^T \f(\st(t),\ac(t),\ad(t)) \Delta t + \J_t(\st(t),t) \Delta t {\large\}}. \nonumber
+\end{align}
+Note that we are optimizing over instantaneous actions, and so we optimizing over finite dimensional quantities as opposed to functions. Dividing through by $\Delta t$ and removing redundant terms, we get the \textit{Hamilton-Jacobi-Isaacs} (HJI) equation
+\begin{equation}
+    0 = \J_t(\st,t) + \max_{\ac} \min_{\ad} \left\{ \cost(\st,\ac,\ad) + (\J_{\st}(\st,\ac,\ad))^T \f(\st,\ad,\ac) \right\}
+\end{equation}
+with boundary condition
+\begin{equation}
+    \J(\st,0) = \cost_f(\st).
+\end{equation}
+Note that we have switched the order of the min/max.
 
 \subsubsection{Reachability}
 
+Differential games have applications in multi-agent modeling (both in the context of autonomous systems engineering and, e.g., economics and operations research). One concrete application in engineering is reachability analysis. In this setting, an agent aims to compute the set of states in which there exists a policy that either avoids a target set or enters a target set, subject to adversarial disturbances. The former case, in which we would like to avoid a target set, is useful for safety verification. If we are able to, even in the worst case, guarantee e.g. collision avoidance, we have guarantees on safety (subject of course to our system assumptions). The latter case is useful for task satisfaction. For example, we would like a quadrotor to reach a set of safe hovering poses, even under adversarial disturbances. Finding the backward reachable set in this case would find all states such that there exists a policy that succeeds in reaching the target set. 
+
+More concretely, the first case aims to find a set 
+\begin{equation}
+    \mathcal{A}(t) = \{\bar{\st} : \exists \Gamma(\ac)(\cdot), \forall \ac(\cdot), \stdot = \f(\st,\ac,\ad), \st(t) = \bar{\st}, \st(0) \in \mathcal{T}\}
+\end{equation}
+where $\mathcal{T}$ is the unsafe set which we aim to avoid. Breaking this down, $\mathcal{A}(t)$ is the set of states at time $t$ such that there exists $\Gamma(\ac)$ that maps action $\ac$ to a disturbance such that, following the dynamics induced by the disturbance and the action sequence, the state is in $\mathcal{T}$ at time $0$ (note that we are considering $0 \leq t$).
+
+The second case aims to find a set 
+\begin{equation}
+\mathcal{R}(t) = \{\bar{st} : \forall \Gamma(\ac)(\cdot), \exists \ac(\cdot), \stdot = \f(\st,\ac,\ad), \st(t) = \bar{\st}, \st(0) \in \mathcal{T}\},
+\end{equation}
+where in this case $\mathcal{T}$ is the set that we wish to reach. In this setting, we wish to find all states that, no matter what strategy the disturbance takes, there exist control actions that can steer the system to the goal state. Because the disturbance is adversarial (we reason over all adversary strategies), this is an extremely conservative form of safety analysis. 
+
+Computation of the backward reachable set results from solving a differential \textit{game of kind} in which the outcome is Boolean (i.e. whether or not $\st(0) \in \mathcal{T}$). This boolean outcome can be encoded by removing the running cost and choosing a particular form for the final cost. In particular, we can choose a final cost where
+\begin{equation}
+    \st \in \mathcal{T} \iff \cost_f(\st) \leq 0.
+\end{equation}
+As a result, the agent should aim to maximize $\cost_f$ to avoid $\mathcal{T}$, whereas the disturbance should aim to minimize it. The two settings then take the following forms:
+\begin{itemize}
+    \item Set avoidance: $J(\st,t) = \min_{\Gamma(\ac)} \max_{\ac} \cost_f(\st(0))$
+    \item Set reaching: $J(\st,t) = \max_{\Gamma(\ac)} \min_{\ac} \cost_f(\st(0))$
+\end{itemize}
+
+\paragraph{Sets vs. Tubes.} We have so far considered avoidance or reachability problems for which we care about set membership at time $t=0$. However, for something like collision avoidance, we would like to stay collision free at every time as opposed to a particular time. \textit{Backward reachable sets} capture the case in which only the final time set membership matters, and states for times $t<0$ do not matter. \textit{Backward reachable tubes} capture the entire time duration of the problem. Any state that passes through the target at any time in the problem duration is included. This yields a modified value function of the form
+\begin{equation}
+    \J(\st,t) - \min_{\Gamma(\ac)} \max_{\ac} \min_{\tau \in [t,0]} \cost_f(\st(\tau)).
+\end{equation}
+If the target set membership holds at any time $\tau'$, then $\min_{\tau\in[t,0]} \cost_f(\st(\tau)) \leq \cost_f(\st(\tau')) \leq 0$.
 
 \subsection{Further Reading}
+
+Our coverage of reachability analysis is based on the \cite{mitchell2005time}, which is an important early work in the field, in addition to being a relatively comprehensive coverage of the method. For a review of differential games with a (slight) emphasis on economics and management science, we refer the reader to \cite{bressan2010noncooperative}. For a review of HJB and continuous time LQR, we refer the reader to \cite{bertsekas1995dynamic} and \cite{kirk2012optimal}.
+
+%applications of differential games in OR and econ -- tutorial from OR
