@@ -37,7 +37,7 @@ Let $J^*_t(\st(t),t) = \nabla_t J^* (\st(t),t)$ and $J^*_{\st}(\st(t),t) = \nabl
 \end{align}
 for small $\Delta t$. The first term is a result of Taylor expanding the integral and applying the fundamental theorem of calculus. Note that we can pull $\J^*(\st(t),t)$ out of the minimization over cost, as this quantity will not vary under different choices of future actions. Dividing through by $\Delta t$ and taking the limit $\Delta t \to 0$, we obtain the \textit{Hamilton-Jacobi-Bellman} equation
 \begin{equation}
-    0 = \J^*_t(\st(t),t) + \min_{\ac(t)} \left\{ \cost(\st(t),\ac(t),t) + (\J^*(\st(t),t))^T \f(\st(t),\ac(t),t) \right\}
+    0 = \J^*_t(\st(t),t) + \min_{\ac(t)} \left\{ \cost(\st(t),\ac(t),t) + (\J_{\st}^*(\st(t),t))^T \f(\st(t),\ac(t),t) \right\}
 \end{equation}
 with terminal condition
 \begin{equation}
@@ -69,7 +69,7 @@ Furthermore, the control trajectory $\{\ac^*(t)\mid t \in [t_0, t_f]\}$ is optim
 \end{theorem}
 
 \begin{proof}
-\cite{bertsekas1995dynamic}, Volume 1, Section 3.2.
+\cite{bertsekas1995dynamic}, Volume 1, Section 7.2.
 \end{proof}
 
 \subsubsection{Continuous-Time LQR}
@@ -88,7 +88,7 @@ We will write the Hamiltonian,
 \begin{equation}
     \ham = \frac{1}{2} \st^T(t) Q(t) \st(t) + \frac{1}{2} \ac^T(t) R(t) \ac(t) + \J^*_{\st}(\st(t),t)^T (A(t) \st(t) + B(t) \ac(t))
 \end{equation}
-which yeilds necessary optimality conditions 
+which yields necessary optimality conditions 
 \begin{equation}
     0 = \nabla_{\ac} \ham = R(t) \ac(t) + B^T(t) \J^*_{\st}(\st(t),t).
 \end{equation}
@@ -193,11 +193,11 @@ More concretely, the first case aims to find a set
 \begin{equation}
     \mathcal{A}(t) = \{\bar{\st} : \exists \Gamma(\ac)(\cdot), \forall \ac(\cdot), \stdot = \f(\st,\ac,\ad), \st(t) = \bar{\st}, \st(0) \in \mathcal{T}\}
 \end{equation}
-where $\mathcal{T}$ is the unsafe set which we aim to avoid. Breaking this down, $\mathcal{A}(t)$ is the set of states at time $t$ such that there exists $\Gamma(\ac)$ that maps action $\ac$ to a disturbance such that, following the dynamics induced by the disturbance and the action sequence, the state is in $\mathcal{T}$ at time $0$ (note that we are considering $0 \leq t$).
+where $\mathcal{T}$ is the unsafe set which we aim to avoid. Breaking this down, $\mathcal{A}(t)$ is the set of states at time $t$ such that there exists $\Gamma(\ac)$ that maps action $\ac$ to a disturbance such that, following the dynamics induced by the disturbance and the action sequence, the state is in $\mathcal{T}$ at time $0$ (note that we are considering $t \leq 0$).
 
 The second case aims to find a set 
 \begin{equation}
-\mathcal{R}(t) = \{\bar{st} : \forall \Gamma(\ac)(\cdot), \exists \ac(\cdot), \stdot = \f(\st,\ac,\ad), \st(t) = \bar{\st}, \st(0) \in \mathcal{T}\},
+\mathcal{R}(t) = \{\bar{\st} : \forall \Gamma(\ac)(\cdot), \exists \ac(\cdot), \stdot = \f(\st,\ac,\ad), \st(t) = \bar{\st}, \st(0) \in \mathcal{T}\},
 \end{equation}
 where in this case $\mathcal{T}$ is the set that we wish to reach. In this setting, we wish to find all states that, no matter what strategy the disturbance takes, there exist control actions that can steer the system to the goal state. Because the disturbance is adversarial (we reason over all adversary strategies), this is an extremely conservative form of safety analysis. 
 

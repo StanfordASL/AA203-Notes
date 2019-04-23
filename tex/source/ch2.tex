@@ -237,7 +237,7 @@ Despite LQR being an extremely powerful approach to optimal control, it suffers 
 \end{equation}
 Given this, we can linearize our system at each timestep by Taylor expanding,
 \begin{equation}
-    \st_{k+1} \approx \f(\bar{\st}_k,\bar{\ac}_k) + \underbrace{\frac{\partial \f}{\partial \st} (\bar{\st}_k, \bar{\ac}_k)}_{A_k} (\st_k - \bar{\st}_k) + \underbrace{\frac{\partial \f}{\partial \ac} (\bar{\st}_k, \bar{\ac}_k)}_{B_k} (\ac_k - \bar{\ac}_k).
+    \st_{k+1} \approx \f(\bar{\st}_k,\bar{\ac}_k) + \underbrace{\frac{\partial \f}{\partial \st} (\bar{\st}_k, \bar{\ac}_k)}_{A_k} (\st_k - \bar{\st}_k) + \underbrace{\frac{\partial \f}{\partial \ac} (\bar{\st}_k, \bar{\ac}_k)}_{B_k} (\ac_k - \bar{\ac}_k)
 \end{equation}
 which allows us to again rewrite the system in terms of deviations, to get
 \begin{equation}
@@ -354,7 +354,7 @@ Note that $Q$ here is different from the $Q$ matrix in Section \ref{sec:disrete_
     \begin{bmatrix}
     2 Q_k & Q_{\st,k}^T & Q_{\ac,k}^T\\
     Q_{\st,k} & Q_{\st \st,k} & Q_{\ac \st,k}^T\\
-    Q_{\st,k} & Q_{\ac \st,k} & Q_{\ac \ac,k}
+    Q_{\ac,k} & Q_{\ac \st,k} & Q_{\ac \ac,k}
 \end{bmatrix}
     \begin{bmatrix}
     1\\
@@ -464,7 +464,7 @@ with terminal cost $\frac{1}{2}\st_N^T Q_N \st_N$. We wish to minimize the expec
 \label{eq:LQR_rec_cost_stoch}
     \J_{k}^*(\st_{k}) &=  \min_{\ac_{k} \in \R^m} \E {\Large[} 
     \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k}\\
-    &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]}. \nonumber\\
+    &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} \nonumber\\
     &= \min_{\ac_{k} \in \R^m} {\Large\{} 
     \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} \\
     &+ \E {\Large[} \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} {\Large\}}. \nonumber
