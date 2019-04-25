@@ -210,7 +210,7 @@ where $f:\R^n \to \R$, $h_i:\R^n \to \R$ are $C^1$. We will write $\bm{h} = [h_1
 \end{equation}
 There are several possible interpretations for Lagrange multipliers. First, note that the cost gradient $f(\bm{x}^*)$ is in the subspace spanned by the constraint gradients at $\bm{x}^*$. Equivalently, $f(\bm{x}^*)$ is orthogonal to the subspace of first order feasible variations 
 \begin{equation}
-    V(\bm{x}^*) = \{\Delta \bm{x} \mid \nabla h_i(\bm{x}^*)^T \Delta \bm{x}, i=1,\ldots,m\}.
+    V(\bm{x}^*) = \{\Delta \bm{x} \mid \nabla h_i(\bm{x}^*)^T \Delta \bm{x} = 0, i=1,\ldots,m\}.
 \end{equation}
 This subspace is the space of variations $\Delta \bm{x}$ for which $\bm{x} = \bm{x}^* + \Delta \bm{x}$ satisfies the constraint $\bm{h}(\bm{x}) = 0$ up to first order. Therefore, at a local minimum, the first order cost variation $\nabla f(\bm{x}^*)^T \Delta \bm{x}$ is zero for all variations $\Delta \bm{x}$ in this space. 
 

@@ -1,1 +1,171 @@
-\section{Indirect Methods for Optimal Control}
+\section{Indirect Methods}
+
+\subsection{Calculus of Variations}
+
+We will begin by restating the optimal control problem. We will to find an admissible control sequence $\ac^*$ which causes the system 
+\begin{equation}
+    \stdot = \f(\st(t),\ac(t),t)
+\end{equation}
+to follow an \textit{admissible} trajectory $\st^*$ that minimizes the functional 
+\begin{equation}
+    \J = \cost_f(\st(t_f),t_f) + \int_{t_0}^{t_f} \cost(\st(t),\ac(t),t) dt.
+\end{equation}
+To find the minima of functions of a finite number of real numbers, we rely on the first order optimality conditions to find candidate minima, and use higher order derivatives to determine whether a point is a local minimum. Because we are minimizing a function that maps from some $n$ dimensional space to a scalar, candidate points have zero gradient in each of these dimensions. However, in the optimal control problem, we have a cost \textit{functional}, which maps functions to scalars. This is immediately problematic for our first order conditions --- we are required to check the necessary condition at infinite points. The necessary notion of optimality conditions for functionals is provided by calculus of variations.
+
+Concretely, we define a functional $\J$ as a rule of correspondence assining each function $\st$ in a class $\Omega$ (the domain) to a unique real number. The functional $\J$ is linear if and only if 
+\begin{equation}
+    \J(\alpha_1 \st_1 + \alpha_2 \st_2) = \alpha_1 \J(\st_1) + \alpha_2 \J(\st_2)
+\end{equation}
+for all $\st_1, \st_2, \alpha_1 \st_1 + \alpha_2 \st_2$ in $\Omega$. We must now define a notion of ``closeness'' for functions. Intuitively, two points being close together has an immediate geometric interpretation. We first define the norm of a function. The norm of a function is a rule of correspondence that assigns each $\st \in \Omega$, defined over $t \in [t_0,t_f]$, a real number. The norm of $\st$, which we denote $\|\st\|$, satisfies:
+\begin{enumerate}
+    \item $\|\st\| \geq 0$, and $\|\st\|=0$ iff $\st(t) = 0$ for all $t \in [t_0,t_f]$
+    \item $\|\alpha \st\| = |\alpha| \|\st\|$ for all real numbers $\alpha$
+    \item $\|\st_1 + \st_2\| \leq \|\st_1\| + \|\st_2\|$.
+\end{enumerate}
+To compare the closeness of two functions $\bm{y}, \bm{z}$, we let $\st(t) = \bm{y}(t) - \bm{z}(t)$. Thus, for two identical functions, $\|\st\|$ is zero. Generally, a norm will be small for ``close'' functions, and large for ``far apart'' functions. However, there exist many possible definitions of norms that satisfy the above conditions. 
+
+\subsubsection{Extrema for Functionals}
+
+A functional $\J$ with domain $\Omega$ has a local minimum at $\st^*(t) \in \Omega$ if there exists an $\epsilon > 0$ such that $\J(\st(t)) \geq \J(\st^*(t))$ for all $\st(t) \in \Omega$ such that $\|\st(t) - \st^*(t)\| < \epsilon$. Maxima are defined similarly, just with $\J(\st(t)) \leq \J(\st^*(t))$. 
+
+Analogously to optimization of functions, we define the variation of the functional as
+\begin{equation}
+    \Delta \J(\st(t),\delta \st(t)) \vcentcolon= \J(\st(t) + \delta \st(t)) - \J(\st(t))
+\end{equation}
+where $\delta \st(t)$ is the \textit{variation} of $\st(t)$. The increment of a functional can be written as 
+\begin{equation}
+    \Delta \J(\st,\delta \st) = \delta \J(\st,\delta \st) + g(\st,\delta \st) \|\delta \st\|
+\end{equation}
+where $\delta \J$ is linear in $\delta \st$. If 
+\begin{equation}
+    \lim_{\|\delta \st \| \to 0} \{g(\st,\delta \st)\} = 0
+\end{equation}
+then $\J$ is said to be differentiable on $\st$ and $\delta \J$ is the variation of $\J$ at $\st$. 
+We can now state the \textit{fundamental theorem of the calculus of variations}. 
+
+\begin{theorem}[Fundamental Theorem of CoV]
+Let $\st(t)$ be a vector function of $t$ in the class $\Omega$, and $\J(\st)$ be a differentiable functional of $\st$. Assume that the functions in $\Omega$ are not constrained by any boundaries. If $\st^*$ is an extremal, the variation of $\J$ must vanish at $\st^*$, that is $\delta \J(\st^*, \delta \st) = 0$ for all admissible $\delta \st$ (i.e. such that $\st + \delta \st \in \Omega$).
+\end{theorem}
+
+\begin{proof}
+\cite{kirk2012optimal}, Section 4.1.
+\end{proof}
+
+We will now look at how calculus of variations may be leveraged to approach practical problems. Let $\st$ be a continuous function in $C^1$. We would like to find a function $\st^*$ for which the functional 
+\begin{equation}
+    \J(\st) = \int_{t_0}^{t_f} g(\st(t),\stdot(t),t) dt
+\end{equation}
+has a relative extremum. We will assume $g \in C^2$, that $t_0,t_f$ are fixed, and $x_0, x_f$ are fixed. Let $\st$ be any curve in $\Omega$, and we will write the variation $\delta\J$ from the increment
+\begin{align}
+    \Delta \J(\st,\delta \st) &= \J(\st + \delta \st) - \J(\st)\\
+    &= \int_{t_0}^{t_f} g(\st + \delta \st, \stdot + \delta \stdot, t) dt - \int_{t_0}^{t_f} g(\st,\stdot,t) dt\\
+    &= \int_{t_0}^{t_f} g(\st + \delta \st, \stdot + \delta \stdot, t) - g(\st,\stdot,t) dt.
+\end{align}
+Expanding via Taylor series, we get
+\begin{equation}
+    \Delta J(\st,\delta \st) = \int_{t_0}^{t_f} g(\st,\stdot,t) + \underbrace{\frac{\partial g}{\partial \st}}_{g_{\st}} (\st,\stdot, t) \delta \st + \underbrace{\frac{\partial g}{\partial \stdot}}_{g_{\stdot}} (\st,\stdot, t) \delta \stdot + o(\delta \st, \delta \stdot) - g(\st,\stdot,t) dt
+\end{equation}
+which yields the variation
+\begin{equation}
+    \delta \J = \int_{t_0}^{t_f} g_{\st}(\st,\stdot,t) \delta \st + g_{\stdot}(\st,\stdot,t)\delta \stdot \,\,dt.
+\end{equation}
+Integrating by parts, we have 
+\begin{equation}
+    \delta \J = \int_{t_0}^{t_f} \left[ g_{\st}(\st,\stdot,t) - \frac{d}{dt} g_{\stdot}(\st,\stdot,t)\right] \delta \st \delta t + [g_{\stdot}(\st,\stdot,t)\delta \st(t)]_{t_0}^{t_f}.
+\end{equation}
+We have assumed $\st(t_0), \st(t_f)$ given, and thus $\delta \st(t_0) = 0$, $\delta \st(t_f) = 0$. Considering an extramal curve, applying the CoV theorem yields
+\begin{equation}
+    \int_{t_0}^{t_f} \left[ g_{\st}(\st,\stdot,t) - \frac{d}{dt} g_{\stdot}(\st,\stdot,t)\right] \delta \st \delta t.
+    \label{eq:euler_int}
+\end{equation}
+We can now state the fundamental lemma of CoV.
+
+\begin{lemma}[Fundamental Lemma of CoV]
+If a function $h$ is continuous and 
+\begin{equation}
+    \int_{t_0}^{t_f} h(t) \delta \st(t) dt = 0
+\end{equation}
+for every function $\delta \st$ that is continuous in the interval $[t_0,t_f]$, then $h$ must be zero everywhere in the interval $[t_0,t_f]$.
+\end{lemma}
+
+\begin{proof}
+\cite{kirk2012optimal}, Section 4.2.
+\end{proof}
+
+Applying the fundamental lemma, we find that a necessary condition for $\st^*$ being an extremal is 
+\begin{equation}
+    g_{\st}(\st,\stdot,t) - \frac{d}{dt} g_{\stdot}(\st,\stdot,t) = 0
+\end{equation}
+for all $t \in [t_0, t_f]$, which is the \textit{Euler equation}. This is a nonlinear, time-varying second-order ordinary differential equation with split boundary conditions (at $\st(t_0)$ and $\st(t_f)$).
+
+\subsubsection{Generalized Boundary Conditions}
+
+In the previous subsection, we assumed that $t_0, t_f, \st(t_0), \st(t_f)$ were all given. We will now relax that assumption. In particular, $t_f$ may be fixed or free, and each component of $\st(t_f)$ may be fixed or free. 
+
+We begin by writing the variation around $\st^*$
+\begin{align}
+\delta \J &= \left[ g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \right] \delta \st(t_f) + 
+\left[ g(\st^*(t_f),\stdot^*(t_f),t_f) \right] \delta t_f\\
+& \qquad + \int_{t_0}^{t_f} \left[ g_{\st}(\st^*,\stdot^*,t) - \frac{d}{dt} g_{\stdot}(\st^*,\stdot^*,t)\right] \delta \st \delta t \nonumber
+\end{align}
+by using the same integration by parts approach as before. Note that for fixed $t_f$ and $\st(t_f)$, the variations $\delta t_f$ and $\delta \st(t_f)$ vanish, and so we are left with (\ref{eq:euler_int}). Because $\delta t_f$ and $\delta \st(t_f)$ do not vanish in this case, we are left with additional boundary conditions that must be satisfied. Note that 
+\begin{equation}
+    \delta \st_f = \delta \st(t_f) + \stdot^*(t_f) \delta t_f
+\end{equation}
+and substituting this, we have
+\begin{align}
+\delta \J &= \left[ g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \right] \delta \st_f + 
+\left[ g(\st^*(t_f),\stdot^*(t_f),t_f) - g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \stdot^*(t_f) \right] \delta t_f\\
+& \qquad + \int_{t_0}^{t_f} \left[ g_{\st}(\st^*,\stdot^*,t) - \frac{d}{dt} g_{\stdot}(\st^*,\stdot^*,t)\right] \delta \st \delta t \nonumber.
+\end{align}
+Stationarity of this variation thus requires 
+\begin{equation}
+    g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) = 0
+\end{equation} 
+if $\st_f$ is free, and 
+\begin{equation}
+    g(\st^*(t_f),\stdot^*(t_f),t_f) - g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \stdot^*(t_f) = 0
+\end{equation}
+if $t_f$ is free, in addition to the Euler equation being satisfied. For a complete reference on the boundary conditions associated with a variety of problem specifications, we refer the reader to Section 4.3 of \cite{kirk2012optimal}.
+
+% TODO add table
+
+\subsubsection{Constrained Extrema}
+
+Previously, we have not considered constraints in the variational problem. However, constraints (and in particular, dynamics constraints) are central to most optimal control problems. Let $\bm{w} \in \R^{n+m}$ be a vector function in $C^1$. As previously, we would like to find a function $\bm{w}^*$ for which the functional 
+\begin{equation}
+    \J(\bm{w}) = \int_{t_0}^{t_f} g(\bm{w}(t),\dot{\bm{w}}(t),t) dt
+\end{equation}
+has a relative extremum, although we additionally introduce the constraints 
+\begin{equation}
+    \f_i(\bm{w}(t), \dot{\bm{w}}(t),t) = 0, \quad i = 1, \ldots, n.
+\end{equation}
+We will again assume $g \in C^2$ and that $t_0, \bm{w}(t_0)$ are fixed. Note that as a result of these $n$ constraints, only $m$ of the $n+m$ components of $\bm{w}$ are independent. 
+
+One approach to solving this constrained problem is re-writing the $n$ dependent components of $\bm{w}$ in terms of the $m$ independent components. However, the nonlinearity of the constraints typically makes this infeasible. Instead, we will turn to Lagrange multipliers. We will write our \textit{augmented functional} as 
+\begin{equation}
+    \hat{g}(\bm{w}(t),\dot{\bm{w}}(t),\bm{p}(t),t) \vcentcolon = g(\bm{w}(t),\dot{\bm{w}}(t),t) + \bm{p}^T(t) \bm{f}(\bm{w}(t),\dot{\bm{w}}(t),t)
+\end{equation}
+where $\bm{p}(t)$ are Lagrange multipliers that are functions of time. Based on this, a necessary condition for optimality is 
+\begin{equation}
+    \hat{g}_{\bm{w}}(\bm{w}^*(t),\dot{\bm{w}}^*(t),\bm{p}^*(t),t) - \frac{d}{dt} \hat{g}_{\dot{\bm{w}}}(\bm{w}^*(t),\dot{\bm{w}}^*(t),\bm{p}^*(t),t) = 0
+\end{equation}
+with 
+\begin{equation}
+    \bm{f}(\bm{w}^*(t), \dot{\bm{w}}^*(t),t) = 0.
+\end{equation}
+
+
+\subsection{Indirect Methods for Optimal Control}
+
+
+
+\subsection{Pontryagin's Maximum Principle}
+
+
+
+\subsection{Numerical Aspects of Indirect Optimal Control}
+
+
+
+\subsection{Further Reading}
