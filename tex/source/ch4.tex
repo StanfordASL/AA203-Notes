@@ -158,7 +158,32 @@ with
 
 \subsection{Indirect Methods for Optimal Control}
 
+Having built the foundations of functional optimization via calculus of variations, we will now derive the necessary conditions for optimal control under the assumption that the admissible controls are not bounded. The problem, as previously stated, is to find an \textit{admissible control} $\ac^*$ which causes the system 
+\begin{equation}
+    \stdot(t) = \f(\st(t),\ac(t),t)
+\end{equation}
+to follow an \textit{admissible trajectory} $\st^*$ that minimizes the functional
+\begin{equation}
+    \J(\ac) = \cost_f(\st(t_f),t_f) + \int_{t_0}^{t_f} \cost(\st(t),\ac(t),t) dt
+\end{equation}
+under the assumptions that $\cost_f \in C^2$, the state and control are unconstrained, and $t_0, \st(t_0)$ are fixed. We define the \textit{Hamiltonian} as
+\begin{equation}
+    \ham(\st(t),\ac(t),\cst(t),t) \vcentcolon= \cost(\st(t),\ac(t),t) + \cst(t) \f(\st(t),\ac(t),t).
+\end{equation}
+Then, the necessary conditions are 
+\begin{align}
+    \stdot^*(t) = \frac{\partial \ham}{\partial \cst}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
+    \dot{\cst}^*(t) = -\frac{\partial \ham}{\partial \st}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
+    0 = \frac{\partial \ham}{\partial \ac}(\st^*(t),\ac^*(t),\cst^*(t),t)
+\end{align}
+which must hold for all $t \in [t_0,t_f]$. Additionally, the boundary conditions 
+\begin{align}
+    [\frac{\partial \cost_f}{\partial \st}(\st^*(t_f),t_f)& - \cst^*(t_f)] \delta \st_f\\
+    & + [ \ham(\st^*(t_f),\ac^*(t_f), \cst^*(t_f), t_f) + \frac{\partial \cost_f}{\partial t}(\st^*(t_f),t_f)] \delta t_f = 0 \nonumber
+\end{align}
+must be satisfied. Note that as in the previous section, they are automatically satisfied if the terminal state and time are fixed. Based on these necessary conditions, we have a set of $2n$ \textit{first-order} differential equations (for the state and co-state), and a set of $m$ algebraic equations (control equations). The solution to the state and co-state equations will contain $2n$ constants of integration. To solve for these constants, we use the initial conditions $\st(t_0) = \st_0$ (of which there are $n$), and an additional $n$ (or $n+1$) equations from the boundary conditions. We are left with a two-point boundary value problem, which are considerably more difficult to solve than initial value problems which can just be integrated forward. For a full review of boundary conditions, we again refer the reader to \cite{kirk2012optimal}.
 
+% TODO: proof of NOC
 
 \subsection{Pontryagin's Maximum Principle}
 
