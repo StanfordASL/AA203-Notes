@@ -172,18 +172,42 @@ under the assumptions that $\cost_f \in C^2$, the state and control are unconstr
 \end{equation}
 Then, the necessary conditions are 
 \begin{align}
+\label{eq:nec_ham_conds1}
     \stdot^*(t) = \frac{\partial \ham}{\partial \cst}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
     \dot{\cst}^*(t) = -\frac{\partial \ham}{\partial \st}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
     0 = \frac{\partial \ham}{\partial \ac}(\st^*(t),\ac^*(t),\cst^*(t),t)
+    \label{eq:nec_ham_conds3}
 \end{align}
 which must hold for all $t \in [t_0,t_f]$. Additionally, the boundary conditions 
 \begin{align}
+\label{eq:ham_bcs}
     [\frac{\partial \cost_f}{\partial \st}(\st^*(t_f),t_f)& - \cst^*(t_f)] \delta \st_f\\
     & + [ \ham(\st^*(t_f),\ac^*(t_f), \cst^*(t_f), t_f) + \frac{\partial \cost_f}{\partial t}(\st^*(t_f),t_f)] \delta t_f = 0 \nonumber
 \end{align}
 must be satisfied. Note that as in the previous section, they are automatically satisfied if the terminal state and time are fixed. Based on these necessary conditions, we have a set of $2n$ \textit{first-order} differential equations (for the state and co-state), and a set of $m$ algebraic equations (control equations). The solution to the state and co-state equations will contain $2n$ constants of integration. To solve for these constants, we use the initial conditions $\st(t_0) = \st_0$ (of which there are $n$), and an additional $n$ (or $n+1$) equations from the boundary conditions. We are left with a two-point boundary value problem, which are considerably more difficult to solve than initial value problems which can just be integrated forward. For a full review of boundary conditions, we again refer the reader to \cite{kirk2012optimal}.
 
-% TODO: proof of NOC
+\subsubsection{Proof of the Necessary Conditions}
+
+We will now prove the necessary conditions, (\ref{eq:nec_ham_conds1} -- \ref{eq:nec_ham_conds3}), along with the boundary conditions (\ref{eq:ham_bcs}). For simplicity, assume that the terminal cost is zero, and that $t_f, \st(t_f)$ are fixed and given. Consider the augmented cost function 
+\begin{equation}
+\hat{\cost}(\st(t), \stdot(t), \ac(t), \cst(t),t) \vcentcolon= \cost(\st(t),\ac(t),t) + \cst^T(t) [\f(\st(t),\ac(t),t) - \stdot(t)].
+\end{equation}
+When the constraint holds, this augmented cost function is exactly equal to the original cost function. The augmented total cost is then
+\begin{equation}
+    \hat{\J}(\ac) = \int_{t_0}^{t_f} \hat{\cost}(\st(t), \stdot(t), \ac(t), \cst(t),t) dt.
+\end{equation}
+Applying the fundamental theorem of CoV on an extremal, we have
+\begin{align}
+    0 = &\delta \hat{\J}(\ac) = \int_{t_0}^{t_f} \left[ \overbrace{\frac{\partial \hat{\cost}}{\partial \st}(\st^*(t), \stdot^*(t), \ac^*(t), \cst^*(t),t)}^{\frac{\partial \cost}{\partial \st}(\st^*(t),  \ac^*(t), t) + \frac{\partial \f}{\partial \st}^T(\st^*(t),  \ac^*(t), t)\cst^*(t)} - \overbrace{\frac{d}{dt} \frac{\partial \hat{\cost}}{\partial \stdot}(\st^*(t), \stdot^*(t), \ac^*(t), \cst^*(t),t)}^{-\frac{d}{dt}(-\cst^*(t))} \right]^T \delta \st(t) \\
+    & + \left[ \frac{\partial \hat{\cost}}{\partial \ac}(\st^*(t), \stdot^*(t), \ac^*(t), \cst^*(t),t)\right]^T \delta \ac(t) + \underbrace{\left[\frac{\partial \hat{\cost}}{\partial \cst}(\st^*(t), \stdot^*(t), \ac^*(t), \cst^*(t),t) \right]^T }_{\f(\st^*(t),\ac^*(t),t) - \stdot^*(t)} \delta \cst(t) dt \nonumber.
+\end{align}
+Considering each term in sequence, we have:
+\begin{itemize}
+    \item $\f(\st^*(t),\ac^*(t),t) - \stdot(t) = 0$ on an extremal.
+    \item The Lagrange multipliers are arbitrary, so we can select them to make the coefficients of $\delta \st(t)$ equal to zero, giving $\dot{\cst}(t) = -\frac{\partial \cost}{\partial \st}(\st^*(t),  \ac^*(t), t) - \frac{\partial \f}{\partial \st}^T(\st^*(t),  \ac^*(t), t)\cst^*(t)$.
+    \item The remaining variation $\delta \ac(t)$ is independent, so its coefficient must be zero, thus $ \frac{\partial \cost}{\partial \ac}(\st^*(t),  \ac^*(t), t) + \frac{\partial \f}{\partial \ac}^T(\st^*(t),  \ac^*(t), t)\cst^*(t) = 0$.
+\end{itemize}
+These conditions exactly give the necessary conditions as previously stated, when recast with the Hamiltonian formalism.
 
 \subsection{Pontryagin's Maximum Principle}
 

@@ -1,1 +1,70 @@
+\newpage
+
 \section{Reinforcement Learning}
+
+\subsection{Model-Based Approaches: Linear Systems}
+
+\subsubsection{Adaptive LQR}
+
+% cover classical work on adaptive LQR; exploration/persistent excitation (becker/kumar 85, possibly results from adaptive control books?)
+
+% survey, briefly, modern work on adaptive LQR. Model-based and model-free? Lots of refs from szepesvari and recht papers. 
+
+\subsubsection{Learning-Based MPC}
+
+% Tomlin work + others; linear learning-based MPC only. Survey or dig into details?
+
+\subsubsection{Time-Varying Linear Models}
+
+% Iterative Learning Control?
+
+% Episodic fitting of linear models
+
+\subsection{Model-Based Approaches: Nonlinear Systems}
+
+% Discuss PILCO, other probabilistic methods like PETS?
+
+% Discuss predictive models for observations, e.g. visuomotor control
+% Should avoid introduction of latent variable models in the class, but can include for the future. Could survey representation learning in MB RL?
+
+
+\subsection{Model-Free Approaches}
+
+\subsubsection{Temporal Difference Learning}
+
+% The idea of TD learning, Q learning, DQN. 
+
+
+\subsubsection{Policy Gradient}
+
+% Policy gradient theorem. Deterministic Policy Gradient theorem?
+
+\subsection{Connections Between Model-Based and Model-Free Methods}
+
+% Model-based RL via model-learning + model-free RL. Model-based acceleration for model-free RL. Model-free terminal costs/values for finite horizon MPC-style methods. 
+
+\subsubsection{Model-Based Acceleration for Model-Free RL}
+
+\subsubsection{Model-Free RL for Terminal Costs}
+
+\subsubsection{LQR via Q-Learning}
+
+% Bradtke paper from '93. Is this necessary?
+
+\subsection{Exploration}
+
+% Epsilon greedy and shortcomings for nonlinear systems. Deep exploration as a concept. Practical approaches for exploration in nonlinear systems: Pseudo-count based, Thompson sampling (primarily TS of models), Optimism (risk-seeking LQR?). 
+
+\subsection{Safety}
+
+\subsubsection{Risk-Sensitive RL}
+
+% Risk-sensitive RL. 
+
+\subsubsection{Stability Analysis}
+
+%KL constraints on trajectory shift. Lyapunov methods. 
+
+\subsubsection{Safe Exploration}
+
+% Extensions of the previous methods. GP-based SafeOpt ideas. 
