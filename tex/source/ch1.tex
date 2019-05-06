@@ -228,7 +228,7 @@ If in addition $f$ and $\bm{h}$ are $C^2$, we have
 \end{equation}
 where
 \begin{equation}
-    V(\bm{x}^*) = \{\bm{y} \mid \nabla h_i(\bm{x}^*)^T \bm{y} = 0, i=0,\ldots,m\}.
+    V(\bm{x}^*) = \{\bm{y} \mid \nabla h_i(\bm{x}^*)^T \bm{y} = 0, i=1,\ldots,m\}.
 \end{equation}
 \end{theorem}
 
@@ -277,13 +277,13 @@ We will now address the general case, including inequality constraints,
 \begin{aligned}
 & \underset{\bm{x}}{\min}
 & & f(\bm{x})\\
-& \textrm{s.t.} & & h_i(\bm{x}) = 0, \quad i = 0, \ldots, m\\
-& & & g_j(\bm{x}) \leq 0, \quad j = 0, \ldots, r
+& \textrm{s.t.} & & h_i(\bm{x}) = 0, \quad i = 1, \ldots, m\\
+& & & g_j(\bm{x}) \leq 0, \quad j = 1, \ldots, r
 \end{aligned}
 \end{equation*}
 where $f,h_i,g_i$ are $C^1$. The key intuition for the case of  inequality constraints is based on realizing that for any feasible point, some subset of the constraints will be active (for which $g_j(\bm{x}) = 0$), while the complement of this set will be inactive. We define the active set of inequality constraints, which we denote 
 \begin{equation}
-    A(\bm{x}) = \{j \mid g_j(\bm{x} = 0\}.
+    A(\bm{x}) = \{j \mid g_j(\bm{x}) = 0\}.
 \end{equation}
 A constraint is active at $\bm{x}$ if it is in $A(\bm{x})$, otherwise it is inactive. Note that if $\bm{x}^*$i is a local minimum of the inequality constrained problem, then $\bm{x}^*$ is a local minimum of the identical problem with the inactive constraints removed. Moreover, at this local minimum, the constraints may be treated as equality constraints. Thus, if $\bm{x}^*$ is regular, there exists Lagrange multipliers $\lambda_1^*, \ldots, \lambda_m^*$ and $\mu_j^*, j \in A(\bm{x}^*)$ such that 
 \begin{equation}
@@ -291,12 +291,12 @@ A constraint is active at $\bm{x}$ if it is in $A(\bm{x})$, otherwise it is inac
 \end{equation}
 We will define the Lagrangian
 \begin{equation}
-    L(\bm{x},\bm{\lambda}, \bm{\mu}) = f(\bm{x}) + \sum^m_{i=1} \lambda_i h_i(\bm{x}) + \sum_{j =1}^r \mu_j^*  g_j(\bm{x}^*),
+    L(\bm{x},\bm{\lambda}, \bm{\mu}) = f(\bm{x}) + \sum^m_{i=1} \lambda_i h_i(\bm{x}) + \sum_{j =1}^r \mu_j  g_j(\bm{x}),
 \end{equation}
 which we will use to state the necessary and sufficient conditions. 
 
 \begin{theorem}[Karush-Kuhn-Tucker NOC]
-Let $\bm{x}^*$ be a local minimum for the inquality constrained problem where $f, h_i, g_j$ are $C^1$ and assume $\bm{x}^*$ is regular (equality and active inequality constraint gradients are linearly independent). Then, there exists unique Lagrange multiplier vectors $\bm{\lambda}^*$ and $\bm{\mu}^*$ such that
+Let $\bm{x}^*$ be a local minimum for the inequality constrained problem where $f, h_i, g_j$ are $C^1$ and assume $\bm{x}^*$ is regular (equality and active inequality constraint gradients are linearly independent). Then, there exists unique Lagrange multiplier vectors $\bm{\lambda}^*$ and $\bm{\mu}^*$ such that
 \begin{align}
     \nabla_{\bm{x}} L(\bm{x}^*,\bm{\lambda}^*, \bm{\mu}^*) &= 0\\
     \bm{\mu} &\geq 0\\

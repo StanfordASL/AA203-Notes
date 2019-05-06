@@ -26,11 +26,11 @@ To compare the closeness of two functions $\bm{y}, \bm{z}$, we let $\st(t) = \bm
 
 \subsubsection{Extrema for Functionals}
 
-A functional $\J$ with domain $\Omega$ has a local minimum at $\st^*(t) \in \Omega$ if there exists an $\epsilon > 0$ such that $\J(\st(t)) \geq \J(\st^*(t))$ for all $\st(t) \in \Omega$ such that $\|\st(t) - \st^*(t)\| < \epsilon$. Maxima are defined similarly, just with $\J(\st(t)) \leq \J(\st^*(t))$. 
+A functional $\J$ with domain $\Omega$ has a local minimum at $\st^* \in \Omega$ if there exists an $\epsilon > 0$ such that $\J(\st) \geq \J(\st^*)$ for all $\st \in \Omega$ such that $\|\st - \st^*\| < \epsilon$. Maxima are defined similarly, just with $\J(\st) \leq \J(\st^*)$. 
 
 Analogously to optimization of functions, we define the variation of the functional as
 \begin{equation}
-    \Delta \J(\st(t),\delta \st(t)) \vcentcolon= \J(\st(t) + \delta \st(t)) - \J(\st(t))
+    \Delta \J(\st,\delta \st) \vcentcolon= \J(\st + \delta \st) - \J(\st)
 \end{equation}
 where $\delta \st(t)$ is the \textit{variation} of $\st(t)$. The increment of a functional can be written as 
 \begin{equation}
@@ -51,34 +51,34 @@ Let $\st(t)$ be a vector function of $t$ in the class $\Omega$, and $\J(\st)$ be
 \cite{kirk2012optimal}, Section 4.1.
 \end{proof}
 
-We will now look at how calculus of variations may be leveraged to approach practical problems. Let $\st$ be a continuous function in $C^1$. We would like to find a function $\st^*$ for which the functional 
+We will now look at how calculus of variations may be leveraged to approach practical problems. Let $x$ be a scalar continuous function in $C^1$. We would like to find a function $x^*$ for which the functional 
 \begin{equation}
-    \J(\st) = \int_{t_0}^{t_f} g(\st(t),\stdot(t),t) dt
+    \J(s) = \int_{t_0}^{t_f} g(x(t),x(t),t) dt
 \end{equation}
 has a relative extremum. We will assume $g \in C^2$, that $t_0,t_f$ are fixed, and $x_0, x_f$ are fixed. Let $\st$ be any curve in $\Omega$, and we will write the variation $\delta\J$ from the increment
 \begin{align}
-    \Delta \J(\st,\delta \st) &= \J(\st + \delta \st) - \J(\st)\\
-    &= \int_{t_0}^{t_f} g(\st + \delta \st, \stdot + \delta \stdot, t) dt - \int_{t_0}^{t_f} g(\st,\stdot,t) dt\\
-    &= \int_{t_0}^{t_f} g(\st + \delta \st, \stdot + \delta \stdot, t) - g(\st,\stdot,t) dt.
+    \Delta \J(x,\delta x) &= \J(x + \delta x) - \J(x)\\
+    &= \int_{t_0}^{t_f} g(x + \delta x, \dot{x} + \delta \dot{x}, t) dt - \int_{t_0}^{t_f} g(x,\dot{x},t) dt\\
+    &= \int_{t_0}^{t_f} g(x + \delta x, \dot{x} + \delta \dot{x}, t) - g(x,\dot{x},t) dt.
 \end{align}
 Expanding via Taylor series, we get
 \begin{equation}
-    \Delta J(\st,\delta \st) = \int_{t_0}^{t_f} g(\st,\stdot,t) + \underbrace{\frac{\partial g}{\partial \st}}_{g_{\st}} (\st,\stdot, t) \delta \st + \underbrace{\frac{\partial g}{\partial \stdot}}_{g_{\stdot}} (\st,\stdot, t) \delta \stdot + o(\delta \st, \delta \stdot) - g(\st,\stdot,t) dt
+    \Delta J(x,\delta x) = \int_{t_0}^{t_f} g(x,\dot{x},t) + \underbrace{\frac{\partial g}{\partial x}}_{g_{x}} (x,\dot{x}, t) \delta x + \underbrace{\frac{\partial g}{\partial \dot{x}}}_{g_{\dot{x}}} (x,\dot{x}, t) \delta \dot{x} + o(\delta x, \delta \dot{x}) - g(x,\dot{x},t) dt
 \end{equation}
 which yields the variation
 \begin{equation}
-    \delta \J = \int_{t_0}^{t_f} g_{\st}(\st,\stdot,t) \delta \st + g_{\stdot}(\st,\stdot,t)\delta \stdot \,\,dt.
+    \delta \J = \int_{t_0}^{t_f} g_{x}(x,\dot{x},t) \delta x + g_{\dot{x}}(x,\dot{x},t)\delta \dot{x} \,\,dt.
 \end{equation}
 Integrating by parts, we have 
 \begin{equation}
-    \delta \J = \int_{t_0}^{t_f} \left[ g_{\st}(\st,\stdot,t) - \frac{d}{dt} g_{\stdot}(\st,\stdot,t)\right] \delta \st \delta t + [g_{\stdot}(\st,\stdot,t)\delta \st(t)]_{t_0}^{t_f}.
+    \delta \J = \int_{t_0}^{t_f} \left[ g_{x}(x,\dot{x},t) - \frac{d}{dt} g_{\dot{x}}(x,\dot{x},t)\right] \delta x \delta t + [g_{\dot{x}}(x,\dot{x},t)\delta x(t)]_{t_0}^{t_f}.
 \end{equation}
-We have assumed $\st(t_0), \st(t_f)$ given, and thus $\delta \st(t_0) = 0$, $\delta \st(t_f) = 0$. Considering an extramal curve, applying the CoV theorem yields
+We have assumed $x(t_0), x(t_f)$ given, and thus $\delta x(t_0) = 0$, $\delta x(t_f) = 0$. Considering an extremal curve, applying the CoV theorem yields
 \begin{equation}
-    \int_{t_0}^{t_f} \left[ g_{\st}(\st,\stdot,t) - \frac{d}{dt} g_{\stdot}(\st,\stdot,t)\right] \delta \st \delta t.
+    \int_{t_0}^{t_f} \left[ g_{x}(x,\dot{x},t) - \frac{d}{dt} g_{\dot{x}}(x,\dot{x},t)\right] \delta x \delta t.
     \label{eq:euler_int}
 \end{equation}
-We can now state the fundamental lemma of CoV.
+We can now state the fundamental lemma of CoV. We will state it for vector functions, although our derivation was for the scalar case. 
 
 \begin{lemma}[Fundamental Lemma of CoV]
 If a function $h$ is continuous and 
@@ -104,9 +104,9 @@ In the previous subsection, we assumed that $t_0, t_f, \st(t_0), \st(t_f)$ were 
 
 We begin by writing the variation around $\st^*$
 \begin{align}
-\delta \J &= \left[ g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \right] \delta \st(t_f) + 
-\left[ g(\st^*(t_f),\stdot^*(t_f),t_f) \right] \delta t_f\\
-& \qquad + \int_{t_0}^{t_f} \left[ g_{\st}(\st^*,\stdot^*,t) - \frac{d}{dt} g_{\stdot}(\st^*,\stdot^*,t)\right] \delta \st \delta t \nonumber
+\delta \J &= \left[ g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \right]^T \delta \st(t_f) + 
+\left[ g(\st^*(t_f),\stdot^*(t_f),t_f) \right]^T \delta t_f\\
+& \qquad + \int_{t_0}^{t_f} \left[ g_{\st}(\st^*,\stdot^*,t) - \frac{d}{dt} g_{\stdot}(\st^*,\stdot^*,t)\right]^T \delta \st \delta t \nonumber
 \end{align}
 by using the same integration by parts approach as before. Note that for fixed $t_f$ and $\st(t_f)$, the variations $\delta t_f$ and $\delta \st(t_f)$ vanish, and so we are left with (\ref{eq:euler_int}). Because $\delta t_f$ and $\delta \st(t_f)$ do not vanish in this case, we are left with additional boundary conditions that must be satisfied. Note that 
 \begin{equation}
@@ -114,8 +114,8 @@ by using the same integration by parts approach as before. Note that for fixed $
 \end{equation}
 and substituting this, we have
 \begin{align}
-\delta \J &= \left[ g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \right] \delta \st_f + 
-\left[ g(\st^*(t_f),\stdot^*(t_f),t_f) - g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \stdot^*(t_f) \right] \delta t_f\\
+\delta \J &= \left[ g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \right]^T \delta \st_f + 
+\left[ g(\st^*(t_f),\stdot^*(t_f),t_f) - g^T_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \stdot^*(t_f) \right] \delta t_f\\
 & \qquad + \int_{t_0}^{t_f} \left[ g_{\st}(\st^*,\stdot^*,t) - \frac{d}{dt} g_{\stdot}(\st^*,\stdot^*,t)\right] \delta \st \delta t \nonumber.
 \end{align}
 Stationarity of this variation thus requires 
@@ -124,7 +124,7 @@ Stationarity of this variation thus requires
 \end{equation} 
 if $\st_f$ is free, and 
 \begin{equation}
-    g(\st^*(t_f),\stdot^*(t_f),t_f) - g_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \stdot^*(t_f) = 0
+    g(\st^*(t_f),\stdot^*(t_f),t_f) - g^T_{\stdot}(\st^*(t_f),\stdot^*(t_f),t_f) \stdot^*(t_f) = 0
 \end{equation}
 if $t_f$ is free, in addition to the Euler equation being satisfied. For a complete reference on the boundary conditions associated with a variety of problem specifications, we refer the reader to Section 4.3 of \cite{kirk2012optimal}.
 
@@ -173,15 +173,15 @@ under the assumptions that $\cost_f \in C^2$, the state and control are unconstr
 Then, the necessary conditions are 
 \begin{align}
 \label{eq:nec_ham_conds1}
-    \stdot^*(t) = \frac{\partial \ham}{\partial \cst}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
-    \dot{\cst}^*(t) = -\frac{\partial \ham}{\partial \st}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
-    0 = \frac{\partial \ham}{\partial \ac}(\st^*(t),\ac^*(t),\cst^*(t),t)
+    \stdot^*(t) &= \frac{\partial \ham}{\partial \cst}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
+    \dot{\cst}^*(t) &= -\frac{\partial \ham}{\partial \st}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
+    0 &= \frac{\partial \ham}{\partial \ac}(\st^*(t),\ac^*(t),\cst^*(t),t)
     \label{eq:nec_ham_conds3}
 \end{align}
 which must hold for all $t \in [t_0,t_f]$. Additionally, the boundary conditions 
 \begin{align}
 \label{eq:ham_bcs}
-    [\frac{\partial \cost_f}{\partial \st}(\st^*(t_f),t_f)& - \cst^*(t_f)] \delta \st_f\\
+    [\frac{\partial \cost_f}{\partial \st}(\st^*(t_f),t_f)& - \cst^*(t_f)]^T \delta \st_f\\
     & + [ \ham(\st^*(t_f),\ac^*(t_f), \cst^*(t_f), t_f) + \frac{\partial \cost_f}{\partial t}(\st^*(t_f),t_f)] \delta t_f = 0 \nonumber
 \end{align}
 must be satisfied. Note that as in the previous section, they are automatically satisfied if the terminal state and time are fixed. Based on these necessary conditions, we have a set of $2n$ \textit{first-order} differential equations (for the state and co-state), and a set of $m$ algebraic equations (control equations). The solution to the state and co-state equations will contain $2n$ constants of integration. To solve for these constants, we use the initial conditions $\st(t_0) = \st_0$ (of which there are $n$), and an additional $n$ (or $n+1$) equations from the boundary conditions. We are left with a two-point boundary value problem, which are considerably more difficult to solve than initial value problems which can just be integrated forward. For a full review of boundary conditions, we again refer the reader to \cite{kirk2012optimal}.
@@ -209,9 +209,44 @@ Considering each term in sequence, we have:
 \end{itemize}
 These conditions exactly give the necessary conditions as previously stated, when recast with the Hamiltonian formalism.
 
-\subsection{Pontryagin's Maximum Principle}
+\subsection{Pontryagin's Minimum Principle}
 
+So far, we have assumed that the admissible controls and states are unconstrained. This assumption is frequently violated for real systems---physical actuators have limits on their realizable outputs, and state constraints may occur due to safety considerations. The control $\ac^*$ causes the functional $\J$ to have a relative minimum if
+\begin{equation}
+    \J(\ac) - \J(\ac^*) = \Delta \J \geq 0
+\end{equation}
+for all admissible controls ``close'' to $\ac^*$. Letting $\ac = \ac^* + \delta \ac$, the increment can be expressed as
+\begin{equation}
+    \Delta \J(\ac^*,\delta\ac) = \delta \J(\ac^*,\delta \ac) + \text{higher order terms}.
+\end{equation}
+The variation $\delta \ac$ is arbitrary only if the extremal control is strictly within the boundary for all time in the interval $[t_0,t_f]$. In general, however, an extremal control lies on a boundary during at least subinterval in the interval $[t_0,t_f]$.
+As a consequence, admissible control variations $\delta \ac$ exist whose negatives are not admissible. This implies that a necessary condition for $\ac^*$ to minimize $\J$ is $\delta \J(\ac^*, \delta \ac) \geq 0$ for all admissible variations with $\|\delta \ac\|$ small enough. The reason why the equality in the fundamental theorem of CoV (in which we explicitly assumed no constraints) is replaced with an inequality is the presence of the control constraints. This result has an analogue in calculus, where the necessary condition for a scalar function $f$ to have a relative minimum at the end point is that the differential $df \geq 0$.
 
+Assuming bounded controls $\ac \in \mathcal{U}$, the necessary optimality conditions are 
+\begin{align}
+    \label{eq:nec_pmp_conds1}
+    \stdot^*(t) &= \frac{\partial \ham}{\partial \cst}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
+    \dot{\cst}^*(t) &= -\frac{\partial \ham}{\partial \st}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
+    \ham(\st^*(t),\ac^*(t), \cst^*(t), t) &\leq \ham(\st(t),\ac(t), \cst(t), t) \,\,\forall \ac \in \mathcal{U}
+    \label{eq:nec_pmp_conds3}
+\end{align}
+along with the boundary conditions
+\begin{align}
+\label{eq:ham_bcs}
+    [\frac{\partial \cost_f}{\partial \st}(\st^*(t_f),t_f)& - \cst^*(t_f)]^T \delta \st_f\\
+    & + [ \ham(\st^*(t_f),\ac^*(t_f), \cst^*(t_f), t_f) + \frac{\partial \cost_f}{\partial t}(\st^*(t_f),t_f)] \delta t_f = 0. \nonumber
+\end{align}
+The control $\ac^*(t)$ causes $\ham(\st^*(t),\ac^*(t),\cst^*(t),t)$ to assume its global minimum. This is a harder condition, in general, to analyze. Finally, we have additional necessary conditions. If the final time is fixed and the Hamiltonian does not explicitly depend on time, 
+\begin{equation}
+    \ham(\st^*(t),\ac^*(t),\cst^*(t)) = c \,\, \forall t \in [t_0,t_f]
+\end{equation}
+and if the final time is free and the Hamiltonian does not depend explicitly on time, 
+\begin{equation}
+    \ham(\st^*(t),\ac^*(t),\cst^*(t)) = 0 \,\, \forall t \in [t_0,t_f].
+\end{equation}
+Note that in general, uniqueness and existence are not guaranteed in the constrained setting. 
+
+% TODO add example problems
 
 \subsection{Numerical Aspects of Indirect Optimal Control}
 

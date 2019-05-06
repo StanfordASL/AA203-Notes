@@ -144,7 +144,7 @@ However, for a linear time-invariant system, if $(A,B)$ is controllable, the fee
 
 In the previous subsection, we have derived the common formulation of the LQR controller. In this subsection, we will derive the discrete time LQR controller for a more general system with bilinear/linear terms in the cost and affine terms in the dynamics. This derivation will be the basis of algorithms we will build up in the following subsections. More concretely, we consider systems with stage-wise cost
 \begin{equation}
-    \cost(\st_k, \ac_k) = \frac{1}{2} \st_k^T Q_k \st_k + \frac{1}{2} \ac_k^T R_k \ac_k + \ac_k^T H_k \st_k +\bm{q}_k^T \st_k + \bm{r}_k \ac_k + q_k,
+    \cost(\st_k, \ac_k) = \frac{1}{2} \st_k^T Q_k \st_k + \frac{1}{2} \ac_k^T R_k \ac_k + \ac_k^T H_k \st_k +\bm{q}_k^T \st_k + \bm{r}^T_k \ac_k + q_k,
 \end{equation}
 terminal cost
 \begin{equation}
@@ -183,7 +183,7 @@ We will define the following useful terms which will be used throughout the rema
 \label{eq:Qk_lqr}
     % Q_k &= q_k + v_{k+1}\\
     % Q_{\st,k} &= \bm{q}_k + A_k^T \bm{v}_{k+1}\\
-    S_{\ac,k} &= \bm{r}_k + B_k^T \bm{v}_{k+1} + B_k^T V_{k+1} \bm{d}_k\\
+    S_{\ac,k} &= \bm{r}_k +  \bm{v}^T_{k+1} B_k + \bm{d}^T_k V_{k+1} B_k \\
     % Q_{\st \st,k} &= Q_k + A_k^T V_{k+1} A_k\\
     S_{\ac \ac,k} &= R_k + B_k^T V_{k+1} B_k\\
     S_{\ac \st,k} &= H_k + B_k^T V_{k+1} A_k.
