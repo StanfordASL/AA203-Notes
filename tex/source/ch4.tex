@@ -12,7 +12,7 @@ to follow an \textit{admissible} trajectory $\st^*$ that minimizes the functiona
 \end{equation}
 To find the minima of functions of a finite number of real numbers, we rely on the first order optimality conditions to find candidate minima, and use higher order derivatives to determine whether a point is a local minimum. Because we are minimizing a function that maps from some $n$ dimensional space to a scalar, candidate points have zero gradient in each of these dimensions. However, in the optimal control problem, we have a cost \textit{functional}, which maps functions to scalars. This is immediately problematic for our first order conditions --- we are required to check the necessary condition at infinite points. The necessary notion of optimality conditions for functionals is provided by calculus of variations.
 
-Concretely, we define a functional $\J$ as a rule of correspondence assining each function $\st$ in a class $\Omega$ (the domain) to a unique real number. The functional $\J$ is linear if and only if 
+Concretely, we define a functional $\J$ as a rule of correspondence assigning each function $\st$ in a class $\Omega$ (the domain) to a unique real number. The functional $\J$ is linear if and only if 
 \begin{equation}
     \J(\alpha_1 \st_1 + \alpha_2 \st_2) = \alpha_1 \J(\st_1) + \alpha_2 \J(\st_2)
 \end{equation}
@@ -203,7 +203,7 @@ Applying the fundamental theorem of CoV on an extremal, we have
 \end{align}
 Considering each term in sequence, we have:
 \begin{itemize}
-    \item $\f(\st^*(t),\ac^*(t),t) - \stdot(t) = 0$ on an extremal.
+    \item $\f(\st^*(t),\ac^*(t),t) - \stdot^*(t) = 0$ on an extremal.
     \item The Lagrange multipliers are arbitrary, so we can select them to make the coefficients of $\delta \st(t)$ equal to zero, giving $\dot{\cst}(t) = -\frac{\partial \cost}{\partial \st}(\st^*(t),  \ac^*(t), t) - \frac{\partial \f}{\partial \st}^T(\st^*(t),  \ac^*(t), t)\cst^*(t)$.
     \item The remaining variation $\delta \ac(t)$ is independent, so its coefficient must be zero, thus $ \frac{\partial \cost}{\partial \ac}(\st^*(t),  \ac^*(t), t) + \frac{\partial \f}{\partial \ac}^T(\st^*(t),  \ac^*(t), t)\cst^*(t) = 0$.
 \end{itemize}
@@ -227,7 +227,7 @@ Assuming bounded controls $\ac \in \mathcal{U}$, the necessary optimality condit
     \label{eq:nec_pmp_conds1}
     \stdot^*(t) &= \frac{\partial \ham}{\partial \cst}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
     \dot{\cst}^*(t) &= -\frac{\partial \ham}{\partial \st}(\st^*(t),\ac^*(t),\cst^*(t),t)\\
-    \ham(\st^*(t),\ac^*(t), \cst^*(t), t) &\leq \ham(\st(t),\ac(t), \cst(t), t) \,\,\forall \ac \in \mathcal{U}
+    \ham(\st^*(t),\ac^*(t), \cst^*(t), t) &\leq \ham(\st^*(t),\ac(t), \cst^*(t), t) \,\,\forall \ac \in \mathcal{U}
     \label{eq:nec_pmp_conds3}
 \end{align}
 along with the boundary conditions
@@ -250,6 +250,13 @@ Note that in general, uniqueness and existence are not guaranteed in the constra
 
 \subsection{Numerical Aspects of Indirect Optimal Control}
 
+% Mention how PMP can be leveraged to swap the original optimal control problem into a two-point boundary value problem (TPBVP).
 
+% - Pros: We considerably decrease the dimension of the problem because, instead of looking for a control in the very large space $L^{\infty}$, we look for a vector (that is $p(0)$) in the smaller space $\mathbb{R}^n$. Still, this problem is hard to solve.
+% - Cons: A good guess of $p(0)$ must be available to make the method converge. The mathematical analysis to get further insights concerning such guess might be difficult.
+% Show how to go from PMP to TPBVP for the simple case "fixed final time/fixed final point". Follow the slides of lecture 10 and introduce the "shooting function" $S$ describing all the steps. Therefore, introduce the "indirect shooting method" as research of zeros for the shooting function.
+% Reproduce/show how to adapt the argument above in the presence of either "free final time" or "final point belonging to some submanifold", or both. For "final point belonging to some submanifold", attentively introduce the relation that relates the adjoint vector at the final time $p(t_f)$ with the kernel of the function $F$ that defines the submanifold $M_f = \{x\in\mathbb{R}^n|F(x)=0\}$.
 
 \subsection{Further Reading}
+
+For a practical treatment of indirect methods, we refer the reader to \cite{bryson1975applied}. For a more theoretical treatment, we refer the reader to \cite{lee1967foundations}.

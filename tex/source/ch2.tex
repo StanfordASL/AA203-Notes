@@ -162,11 +162,11 @@ Repeating our approach from the last subsection, we have
 \begin{align}
 \label{eq:LQR_rec_cost2}
     \J_{k}^*(\st_{k}) =  \min_{\ac_{k} \in \R^m} & {\large\{} 
-    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} + \ac_k^T H_k \st_k +\bm{q}_k^T \st_k + \bm{r}_k \ac_k + q_k \\
+    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} + \ac_k^T H_k \st_k +\bm{q}_k^T \st_k + \bm{r}^T_k \ac_k + q_k \\
     &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \bm{d}_k)^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \bm{d}_k) \nonumber \\
     & + \bm{v}^T_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \bm{d_k}) + v_{k+1} {\large\}}. \nonumber
 \end{align}
-Rearranging, have
+Rearranging, we have
 \begin{align}
     \J_{k}^*(\st_{k}) = \min_{\ac_{k} \in \R^m} {\Large\{}  
     & \frac{1}{2} \st_k^T (Q_k + A_k^T V_{k+1} A_k) \st_k + \frac{1}{2} \ac_k^T (R_k + B_k^T V_{k+1} B_k) \ac_k\\
@@ -429,7 +429,7 @@ We can now state the principle of optimality for the stochastic optimal control 
 \begin{theorem}[Discrete-time Principle of Optimality: Stochastic Case]
 Let $\pi^* = (\pi_0^*, \ldots, \pi^*_{N-1})$ be an optimal policy. Assume state $\st_k$ is reachable. Consider the tail subproblem
 \begin{equation}
-\E_{w_{i:N-1}}\left[ \cost_T(\st_N) + \sum_{k=i}^{N-1} \cost_k(\st_k,\pol(\st_k),\w_k) \right].
+\E_{w_{i:N-1}}\left[ \cost_T(\st_N) + \sum_{k=i}^{N-1} \cost_k(\st_k,\pol_k(\st_k),\w_k) \right].
 \end{equation}
 Then the truncated policy $(\pi_i^*, \ldots, \pi^*_{N-1})$ is optimal for the subproblem.
 \end{theorem}
