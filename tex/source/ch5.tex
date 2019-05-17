@@ -157,7 +157,7 @@ We can then solve the linear optimal control problem (with $k=0$, initially),
 \label{eq:ocp}
 & {\min} & & \int_{0}^{t_f} \cost(\st(t),\ac(t),t) dt\\
 & \textrm{s.t.} & & \stdot(t) = \f_{k+1}(\st(t),\ac(t),t), t \in [0,t_f]\\
-& & & \st(0) = \st_0
+& & & \st(0) = \st_0\\
 & & & \st(t_f) = \st_f\\
 & & & \ac(t) \in \mathcal{U}, t \in [0,t_f]
 \end{aligned}
