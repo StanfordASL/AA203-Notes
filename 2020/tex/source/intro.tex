@@ -1,0 +1,36 @@
+\section*{Foreword}
+
+These notes accompany the newly revised (Spring 2019 to current) version of \textit{AA 203: Optimal and Learning-Based Control} at Stanford. The goal of this new course is to present a unified treatment of optimal control and reinforcement learning (RL), with an emphasis on model-based reinforcement learning. The goal of the instructors is to unify the subjects as much as possible, and to concretize connections between these research communities. 
+
+\paragraph{How is this course different from a standard class on Optimal Control?} 
+
+First, we will emphasize practical computational tools for real world optimal control problems, such as model predictive control and sequential convex programming. Beyond this, the last third of the course focuses on the case in which an exact model of the system is not available. We will discuss this setting both in the online context (typically referred to as adaptive optimal control) and in the episodic context (the typical setting for reinforcement learning). 
+
+\paragraph{How is this course different from a standard class on Reinforcement Learning?}
+
+Many courses on reinforcement learning focus primarily on the setting of discrete Markov Decision Processes (MDPs), whereas we will focus primarily on continuous MDPs. More importantly, the focus on discrete MDPs leads planning with a known model (which is typically referred to as ``planning'' or ``control'' in RL) to be relatively simple. In this course, we will spend considerably more time focusing on planning with a known model in both continuous and discrete time. Finally, the focus of this course will primarily be on model-based methods. We will touch briefly on model-free methods at the end, and combinations of model-free and model-based approaches. 
+
+\subsection*{A Note on Notation}
+
+The notation and language used in the control theory and reinforcement learning communities vary substantially, as so we will state all of the notational choices we make in this section. First, optimal control problems are typically stated in terms of minimizing a cost function, whereas reinforcement learning problems aim to maximize a reward. These are mathematically identical statements, where one is simply the negation of the other. Herein, we will use the control theoretic approach of cost minimization. We write $\cost$ for the cost function, $\f$ for the system dynamics, and denote the state and action at time $t$ as $\st_t$ and $\ac_t$ respectively. We write scalars as lower case letters, vectors as bold lower case letters, and matrices as upper case letters. We write a deterministic policy as $\pol(\st)$, and a stochastic policy as $\pol(\ac\mid\st)$.
+We write the cost-to-go (negation of the value function) associated with policy $\pol$ at time $t$ and state $\st$ as $\J^\pol_t(\st)$. We will also sometimes refer to the cost-to-go as the value, but in these notes we are always referring to the expected sum of future costs. 
+For an in-depth discussion of the notational and language differences between the artificial intelligence and control theory communities, we refer the reader to \cite{powell2012ai}.
+
+For notational convenience, we will write the Hessian of a function $f(x)$, evaluated at $x^*$, as $\nabla^2 f(x^*)$.
+
+\subsection*{Prerequisites}
+
+While these notes aim to be almost entirely self contained, familiarity with undergraduate level calculus, differential equations, and linear algebra (equivalent to CME 102 and EE 263 at Stanford) are assumed. We will briefly review nonlinear optimization in the first section of these notes, but previous experience with optimization (e.g. EE 364A) will be helpful. Finally, previous experience with machine learning (at the level of CS 229) is beneficial. 
+
+\subsection*{Omissions}
+
+This course (and these notes) aim to cover the content of at least three distinct fields, each with many papers published every year\footnote{We primarily include references to literature in adaptive control, optimal control, and reinforcement learning, but related work is also published in economics, neuroscience, operations research and quantitative finance, as well as many other fields and sub-fields.}. As a consequence, we skip over many topics. At present, we avoid covering:
+\begin{itemize}
+    \item \textbf{Motion planning beyond trajectory optimization}, including sampling-based motion planning. For this we refer the reader to the excellent book by LaValle \cite{lavalle2006planning}.
+    \item \textbf{Lyapunov analysis and stability analysis in adaptive control}. We refer the reader to \cite{aastrom2013adaptive,ioannou2012robust}.
+    \item \textbf{Imitation learning}.
+\end{itemize}
+
+\subsection*{Acknowledgments}
+
+We acknowledge the students of the 2019 iteration of AA 203, who pointed out many typos. We also acknowledge the former course assistants of AA 203 who helped in the preparation of the material covered in this class and development of this class---in particular, Ed Schmerling, Federico Rossi, Sumeet Singh, and Jonathan Lacotte. 

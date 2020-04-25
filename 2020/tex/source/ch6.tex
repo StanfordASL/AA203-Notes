@@ -1,0 +1,204 @@
+\chapter{Model Predictive Control}
+
+Both direct and indirect methods for open-loop control result in trajectories that must be tracked with an auxiliary controller, if there is any mismatch between the systems model and the true system. This often results in a decoupling of the auxiliary controller from the original optimal control problem, which may result in performance degradation. Alternatively, the auxiliary controller may not be able to take into account other problem considerations such as state or control constraints. In this section, we introduce model predictive control, which applies the ideas from direct methods for trajectory generation online to iteratively replan, and thus results in a closed-loop controller.
+
+\section{Overview of MPC}
+
+Model predictive control entails solving finite-time optimal control problems in a receding horizon fashion (and thus is also frequently referred to as \textit{receding horizon control}). The rough structure of model predictive control algorithms is
+\begin{itemize}
+    \item At each sampling time $t$, solve an \textit{open-loop} optimal control problem over a finite horizon
+    \item Apply the generated optimal input signal during the subsequent sampling interval $[t,t+1)$
+    \item At the next time step $t+1$, solve the new optimal control problem based on new measurements of the state over a shifted horizon
+\end{itemize}
+
+Consider the problem of regulating to the origin the discrete-time linear time-invariant system
+\begin{equation}
+    \st(t+1) = A \st(t) + B \ac(t)
+\end{equation}
+for $\st(t) \in \mathbb{R}^n$, $\ac(t) \in \mathbb{R}^m$, subject to constraints $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}, t \geq 0$, where $\mathcal{X}, \mathcal{U}$ are polyhedra. We will assume the full state measurement is available at time $t$. 
+Given this, we can state the finite-time optimal control problem solved at each stage, $t$, as 
+\begin{equation}
+\begin{aligned}
+\label{eq:ocp}
+& \underset{\ac_{t\mid t}, \ldots, \ac_{t+N-1\mid t}}{\min} & & \cost_f(\st_{t+N\mid t}) + \sum_{k=0}^{N-1} \cost(\st_{t+k\mid t},\ac_{t+k\mid t})  \\
+& \textrm{s.t.} & & \st_{t+k+1\mid t} = A \st_{t+k\mid t} + B \ac_{t+k\mid t}, \quad k = 0, \ldots, N-1 \\
+& & & \st_{t+k\mid t} \in \mathcal{X},  \quad k = 0, \ldots, N-1 \\
+& & & \ac_{t+k\mid t} \in \mathcal{U},  \quad k = 0, \ldots, N-1 \\
+& & & \st_{t+N\mid t} \in \mathcal{X}_f, \\
+& & & \st_{t\mid t} = \st(t)
+\end{aligned}
+\end{equation}
+for which we write the solution as $\J_t^*(\st(t))$. In this problem, $\st_{t+k\mid t}$ and $\ac_{t+k\mid t}$ are the state and action predicted at time $t+k$ from time $t$. Letting $U^*_{t\to t+N\mid t} \vcentcolon= \{\ac^*_{t\mid t}, \ldots, \ac^*_{t+N-1\mid t}\}$ denote the optimal solution, we take $\ac(t) = \ac^*_{t\mid t}(\st(t))$. This optimization problem is then repeated at time $t+1$, based on the new state $\st_{t+1\mid t+1} = \st(t+1)$. Defining the closed-loop control policy as $\pol_t(\st(t)) \vcentcolon= \ac^*_{t\mid t}(\st(t))$, we have the closed-loop dynamics 
+\begin{equation}
+    \st(t+1) = A \st(t) + B \pol_t(\st(t)).
+\end{equation}
+Thus, the central question of this formulation becomes characterizing the behavior of the closed-loop system defined by this iterative re-optimization. As the problem is time-invariant, we can rewrite the closed-loop dynamics as
+\begin{equation}
+    \st(t+1) = A \st(t) + B \pol(\st(t)).
+\end{equation}
+
+The rough structure of the online model predictive control framework is then as follows:
+\begin{enumerate}
+    \item Measure the state $\st(t)$ at every time $t$
+    \item Obtain $U^*_0(\st(t)$ by solving finite-time optimal control problem
+    \item If $U^*_0(\st(t) = \emptyset$ then `problem infeasible', stop
+    \item Apply the first element $\ac^*_0$ of $U^*_0(\st(t)$ to the system
+    \item Wait for the new sampling time $t+1$
+\end{enumerate}
+This framework leads to two main implementation issues. First, the controller may lead us into a situation where after a few steps the finite-time optimal control problem is infeasible, which we refer to as the \textit{persistent feasibility issue}. Even if the feasibility problem does not occur, the generated control inputs may not lead to trajectories that converge to the origin, which we refer to as the \textit{stability issue}. The key question in the analysis of MPC algorithms is how we may guarantee that our ``short-sighted'' control strategy leads to effective long-term behavior. While one possible approach is directly analyzing the closed-loop dynamics, this is in practice very difficult. Our approach will instead be to derive conditions on the terminal function $\cost_f$ and terminal constraint set $\mathcal{X}_f$ so that the persistent feasibility and closed-loop stability are guaranteed. 
+
+\section{Feasibility}
+
+Model predictive control simplifies the online control optimization problem by solving a shorter horizon problem, as opposed to solving the full optimal control problem online at each timestep. This myopic optimization leads to the possibility that after several steps, the problem may no longer be feasible. As such, in this section we will discuss approaches to impose constraints on so-called \textit{recursive feasibility} to avoid this problem. 
+
+Let 
+\begin{align}
+    \mathcal{X}_0 \vcentcolon= \{\st \in \mathcal{X} \mid \exists (\ac_0, \ldots,& \ac_{N-1}) \,\,\text{s.t.}\,\, \st_k \in \mathcal{X}, \ac_k \in \mathcal{U}, k=0,\ldots,N-1,\\
+    & \st_N \in \mathcal{X}_f, \,\text{where}\,\, \st_{k+1} = A \st_k + B \ac_k, k = 0, \ldots, N-1 \nonumber
+    \}
+\end{align}
+be the set of feasible initial states. Simply, this set is the set of initial states for which a sequence of control inputs exist that cause the final state to satisfy the terminal constraint. For the autonomous system $\st(t+1) = \phi(\st(t))$ with constraints $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}$, the one-step controllable set to set $\mathcal{S}$ is defined as 
+\begin{equation}
+    \text{Pre}(\mathcal{S}) \vcentcolon= \{\st \in \mathbb{R}^n : \phi(\st)\in \mathcal{S}\}.
+\end{equation}
+For the system $\st(t+1) = \phi(\st(t),\ac(t))$ with constraints $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}$, the one-step controllable set to set $\mathcal{S}$ is defined as 
+\begin{equation}
+    \text{Pre}(\mathcal{S}) \vcentcolon= \{\st \in \mathbb{R}^n : \exists \ac \in \mathcal{U} \,\,\text{s.t.}\,\, \phi(\st,\ac)\in \mathcal{S}\}.
+\end{equation}
+A set $\mathcal{C} \subseteq \mathcal{X}$ is said to be a control invariant set for the system $\st(t+1) = \phi(\st(t),\ac(t))$ with constraints $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}$, if
+\begin{equation}
+    \st(t) \in \mathcal{C} \implies \exists \ac \in \mathcal{U} \,\,\text{s.t.}\,\, \phi(\st(t),\ac(t)) \in \mathcal{C}, \forall t.
+\end{equation}
+The set $\mathcal{C}_\infty \subset \mathcal{X}$ is said to the maximal control invariant set for the system $\st(t+1) = \phi(\st(t),\ac(t))$ with constraints $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}$, if it control invariant all control invariant sets contained in $\mathcal{X}$\footnote{Control invariant sets can be computed using the MPT toolbox: \url{www.mpt3.org}}. 
+
+We will now proceed to derive critical results on recursive feasibility for linear dynamical systems. We will define the ``truncated'' feasibility set 
+\begin{align}
+    \mathcal{X}_1 \vcentcolon= \{\st \in \mathcal{X} \mid \exists (\ac_1, \ldots,& \ac_{N-1}) \,\,\text{s.t.}\,\, \st_k \in \mathcal{X}, \ac_k \in \mathcal{U}, k=1,\ldots,N-1,\\
+    & \st_N \in \mathcal{X}_f, \,\text{where}\,\, \st_{k+1} = A \st_k + B \ac_k, k = 1, \ldots, N-1 \nonumber
+    \}.
+\end{align}
+Then, we may state the following result on feasibility. 
+
+\begin{lemma}[Persistent Feasibility]
+If set $\mathcal{X}_1$ is a control invariant set for system $\st(t+1) = A \st(t) + B \ac(t)$, $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}$, then the MPC law is persistently feasible. 
+\end{lemma}
+
+\begin{proof}
+Note that 
+\begin{equation}
+    \text{Pre}(\mathcal{X}_1) \vcentcolon= \{\st \in \mathbb{R}^n : \exists \ac \in \mathcal{U} \,\,\text{s.t.}\,\, A\st + B \ac\in \mathcal{X}_1\}.
+\end{equation}
+Since $\mathcal{X}_1$ is control invariant, there exists $\ac \in \mathcal{U}$ such that $A \st + B \ac \in \mathcal{X}_1$ for all $\st \in \mathcal{X}_1$. Thus, $\mathcal{X}_1 \subseteq \mathcal{X}_1 \cap \mathcal{X}$. One may write 
+\begin{equation}
+    \mathcal{X}_0 = \{\st_0 \in \mathcal{X} \mid \exists \ac_0 \in \mathcal{U}\,\, \text{s.t.}\,\, A \st_0 + B \ac_0 \in \mathcal{X}_1\} = \text{Pre}(\mathcal{X}_1) \cap \mathcal{X}.
+\end{equation}
+This then implies $\mathcal{X}_1 \subseteq \mathcal{X}_0$. Choose some $\st_0 \in \mathcal{X}_0$. Let $U^*_0$ be the solution to the finite-time optimization problem, and $\ac^*_0$ be the first control. Let $\st_1 = A \st_0 + B \ac_0^*$. Since $U^*_0$ is feasible, one has $\st_1 \in \mathcal{X}_1$. Since $\mathcal{X}_1 \subseteq \mathcal{X}_0$, $\st_1 \in \mathcal{X}_0$, and hence the next optimization problem is feasible. 
+\end{proof}
+
+For $N=1$, we may set $\mathcal{X}_f = \mathcal{X}1$. If the terminal set is chosen to be control invariant, then MPC problem will be persistently feasible \textit{independent} of chosen control objectives and parameters. The system designer may then choose the parameters to affect the system performance. The logical question, then, is how to extent this result to $N>1$, for which we have the following result.
+
+\begin{theorem}[Persistent Feasibility]
+If $\mathcal{X}_f$ is a control invariant set for the the system $\st(t+1) = A \st(t) + B \ac(t)$, $\st(t) \in \mathcal{X}, \ac(t) \in \mathcal{U}, t\geq 0$, then the MPC law is persistently feasible. 
+\end{theorem}
+
+\begin{proof}
+We will begin by defining the ``truncated'' feasibility set at step $N-1$,
+\begin{align}
+    \mathcal{X}_{N-1} \vcentcolon= \{\st_{N-1} \in \mathcal{X} \mid \exists & \ac_{N-1} \,\,\text{s.t.}\,\, \st_{N-1} \in \mathcal{X}, \ac_{N-1} \in \mathcal{U}\\
+    & \st_N \in \mathcal{X}_f, \,\text{where}\,\, \st_N = A \st_{N-1} + B \ac_{N-1} \nonumber
+    \}.
+\end{align}
+Due to the terminal constraints, have $A \st_{N-1} + B \ac_{N-1} = \st_N \in \mathcal{X}_f$. Since $\mathcal{X}_f$ is a control invariant set, there exists a $\ac \in \mathcal{U}$ such that $\st^+ = A \st_N + B \ac \in \mathcal{X}_f$. This is the requirement that $\st_N \in \mathcal{X}_{N-1}$. Thus, $\mathcal{X}_{N-1}$ is control invariant. Repeating this argument, one can recursively show that $\mathcal{X}_{N-2}, \ldots, \mathcal{X}_1$ are control invariant, and the persistent feasibility lemma then applies. 
+\end{proof}
+
+Practically, we introduce the terminal set $\mathcal{X}_f$ artificially for the purpose of leading to a sufficient condition for persistent feasibility. We would like to choose it to be large, so that is avoids compromising closed-loop performance. 
+
+\section{Stability}
+
+Persistent feasibility does not guarantee that the closed-loop trajectories converge toward the desired equilibrium point. One of the most popular approaches to guarantee persistent feasibility and stability of the MPC law makes use of a control invariant terminal set $\mathcal{X}_f$ for feasibility, and a terminal function $\cost_f(\cdot)$ for stability. To prove stability, we leverage Lyapunov stability theory. 
+
+\begin{theorem}[Lyapunov Stability]
+\label{thm:mpc_stability}
+Consider the equilibrium point $\st = 0$ for the autonomous system $\st_{k+1} = \f(\st_k)$ (with $\f(0)=0)$. Let $\Omega \subset \mathbb{R}^n$ be a closed and bounded set containing the origin. Let $V:\mathbb{R}^n \to \mathbb{R}$ be a function, continuous at the origin, such that 
+\begin{align}
+    & V(0) = 0\, \text{and} \,\,V(\st) > 0, \,\, \forall \st \in \Omega \setminus \{0\} \\
+    & V(\st_{k+1}) - V(\st_k) < 0, \,\, \forall \st \in \Omega \setminus \{0\}.
+\end{align}
+Then $\st=0$ is asymptotically stable in $\Omega$.
+\end{theorem}
+
+We will utilize this result to show that with appropriate choices of $\mathcal{X}_f$ and $\cost_f(\cdot)$, $\J_0^*$ is a Lyapunov function for the closed-loop system. 
+
+\begin{theorem}[MPC Stability (for Quadratic Cost)]
+Assume 
+\begin{enumerate}
+    \item $Q = Q^T > 0, R = R^T >0, Q_f > 0$
+    \item Sets $\mathcal{X}, \mathcal{X}_f$, and $\mathcal{U}$ contain the origin in their interior and are closed
+    \item $\mathcal{X}_f \subseteq \mathcal{X}$ is control invariant
+    \item $\min_{\bm{v} \in \mathcal{U}, A \st + B \bm{v} \in \mathcal{X}_f} \left\{ -\cost_f(\st) + \cost(\st,\bm{v}) + \cost_f(A\st + B\bm{v}) \right\} \leq 0, \forall \st \in \mathcal{X}_f$.
+\end{enumerate}
+Then, the origin of the closed-loop system is asymptotically stable with domain of attraction $\mathcal{X}_f$.
+\end{theorem}
+
+\begin{proof}
+Note that via assumption 3, persistent feasibility is guaranteed for any $Q_f, Q, R$. We want to show that $\J_0^*$ is a Lyapunov function for the closed-loop system $\st(t+1) = \f_{cl}(\st(t)) = A\st(t) + B \pol(\st(t))$, with respect to the equilibrium $\f_{cl}(0) = 0$ (the origin is indeed an equilibrium as $0 \in \mathcal{X}, 0 \in \mathcal{U}$, and the cost is positive for any non-zero control sequence. Note also that $\mathcal{X}_0$ is closed and bounded, and $\J_0^*(0)=0$, both by assumption. Note also that $\J^*_0(\st)>0$ for all $\st \in \mathcal{X}_0 \setminus \{0\}$.
+
+We will now show the decay property. Since the setup is time-invariant, we can study the decay property between $t=0$ and $t=1$. Let $\st(0) \in \mathcal{X}_0$, let $U_0^{[0]} = [\ac^{[0]}_0,\ldots,\ac^{[0]}_{N-1}]$ be the optimal control sequence, and let $[\st(0), \ldots, \st^{[0]}_{N}]$ be the corresponding trajectory. After applying $\ac^{[0]}_0$, one obtains $\st(1) = A \st(0) + B \ac^{[0]}_0$. Now, consider the sequence of control $[\ac^{[0]}_1,\ldots,\ac^{[0]}_{N-1}, \bm{v}]$, where $\bm{v}\in \mathcal{U}$ and the corresponding state trajectory is $[\st(1), \ldots, \st^{[0]}_{N}, A\st^{[0]}_{N} + B \bm{V}]$. Since $\st^{[0]}_{N} \in \mathcal{X}_f$ (by the terminal constraint), and since $\mathcal{X}_f$ is control invariant, 
+\begin{equation}
+    \exists \bar{\bm{v}} \in \mathcal{U}\mid A \st^{[0]}_{N} + B \bar{\bm{v}} \in \mathcal{X}_f.
+\end{equation}
+With such a choice of $\bar{\bm{v}}$, the sequence $[\ac^{[0]}_1,\ldots,\ac^{[0]}_{N-1}, \bm{v}]$ is feasible for the MPC optimization problem at time $t=1$. Subce tgus sequence is not necessarily optimal, 
+\begin{equation}
+    \J_0^*(\st(1)) \leq \cost_f(A \st^{[0]}_{N} + B \bar{\bm{v}}) + \sum_{k=1}^{N-1} \cost(\st^{[0]}_{k}, \ac^{[0]}_{k}) + \cost(\st^{[0]}_{N}, \bm{v}).
+\end{equation}
+Equivalently, 
+\begin{equation}
+    \J_0^*(\st(1)) \leq \cost_f(A \st^{[0]}_{N} + B \bar{\bm{v}}) + \J^*_0(\st(0)) - \cost_f(\st^{[0]}_{N}) - \cost(\st(0), \ac^{[0]}_{0}) + \cost(\st^{[0]}_{N}, \bar{\bm{v}})
+\end{equation}
+Since $\st^{[0]}_{N} \in \mathcal{X}_f$ by assumption, we can select $\bar{\bm{v}}$ such that 
+\begin{equation}
+    \J_0^*(\st(1)) \leq \J_0^*(\st(0)) - \cost(\st(0), \ac^{[0]}_{0}).
+\end{equation}
+Since $\cost(\st(0), \ac^{[0]}_{0})>0$ for all $\st(0) \in \mathcal{X}_0 \setminus \{0\}$,
+\begin{equation}
+    \J_0^*(\st(1)) - \J_0^*(\st(0)) < 0.
+\end{equation}
+The last step is to prove continuity, for which we omit the details and refer the reader to \cite{borrelli2017predictive}.
+\end{proof}
+
+\subsection{Choosing $\mathcal{X}_f$ and $Q_f$}
+
+We will look at two cases. First, we will assume that $A$ is asymptotically stable. Then, we set $\mathcal{X}_f$ as the maximally positive invariant set $\mathcal{O}_\infty$ for the system $\st(t+1) = A \st(t), \st(t) \in \mathcal{X}$. The set $\mathcal{X}_f$ is a control invariant set for the system $\st(t+1) = A \st(t) + B \ac(t)$ as $\ac=0$ is a feasible control. As for stability, $\ac=0$ is feasible and $A \st \in \mathcal{X}_f$ if $\st \in \mathcal{X}_f$, thus assumption 4 of Theorem \ref{thm:mpc_stability} becomes 
+\begin{equation}
+    -\st^T Q_f \st + \st^T Q \st + \st^T A^T Q_f A \st \leq 0, \, \forall \st \in \mathcal{X}_f
+\end{equation}
+which is true since, due to the fact that A is asymptotically stable, 
+\begin{equation}
+    \exists Q_f > 0 \mid - Q_f + Q + A^T Q_f A = 0
+\end{equation}
+
+Next, we will look at the general case. Let $L_\infty$ be the optimal gain for the infinite-horizon LQR controller. Set $\mathcal{X}_f$ as the maximal positive invariant set for system $\st(t+1) = (A + B L_\infty) \st(t)$ (with constraints $\st(t) \in \mathcal{X}, L_\infty \st(t) \in \mathcal{U}$). Then, set $Q_f$ as the solution $Q_\infty$ to the discrete-time Riccati equation. 
+
+\subsection{Explicit MPC}
+
+In some cases, the MPC law can be pre-computed, which removes the need for online optimization. An important case of this is that of constrained LQR, in which we wish to solve the optimal control problem
+\begin{equation}
+\begin{aligned}
+\label{eq:ocp}
+& \underset{\ac_{0}, \ldots, \ac_{N-1}}{\min} & & \st_N^T Q_f \st_N + \sum_{k=0}^{N-1} \st_k^T Q \st_k + \ac_k^T R \ac_k\\
+& \textrm{s.t.} & & \st_{k+1} = A \st_{k} + B \ac_{k}, \quad k = 0, \ldots, N-1 \\
+& & & \st_{k} \in \mathcal{X},  \quad k = 0, \ldots, N-1 \\
+& & & \ac_{k} \in \mathcal{U},  \quad k = 0, \ldots, N-1 \\
+& & & \st_{N} \in \mathcal{X}_f, \\
+& & & \st_{0} = \st
+\end{aligned}
+\end{equation}
+The solution to the constrained LQR problem is a control $\ac^*$ which is a continuous piecewise affine function on polyhedral partition of the state space $\mathcal{X}$, that is $\ac^* = \pol(\st)$, where
+\begin{equation}
+    \pol(\st) = L^j \st + \bm{l}^j\,\,\text{if}\,\, H^j\st \leq K^j, \, j = 1, \ldots, N^r.
+\end{equation}
+Thus, online, one has to locate in which cell of the polyhedral partition the state $\st$ lies, and then one obtains the optimal control via a look-up table query.
+
+\section{Further Reading}
+
+We refer the reader to \cite{borrelli2017predictive} and \cite{rawlings2017model} for two broad and comprehensive treatments of the topic. 

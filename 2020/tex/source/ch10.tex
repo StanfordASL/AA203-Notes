@@ -1,0 +1,68 @@
+\chapter{Adaptive Control and Adaptive Optimal Control}
+
+
+\section{Adaptive Control}
+
+We will now discuss adaptive control, which (broadly speaking) aims to perform online adaptation of the control policy to improve performance. The formulation of the adaptive control problem is typically not in terms of optimal adaptive control. Typically, the designer of an adaptive control system will place more emphasis on proving the combined stability of the controller and the adaptive process than on minimizing a cost function. While in the system identification setting we were concerned with model identification in particular, work on adaptive control investigates both model adaptation as well as controller adaptation, and combinations. Indeed, adaptive control encompasses a wide variety of techniques. In \cite{aastrom2013adaptive}, the authors define an adaptive controller as ``a controller with adjustable parameters and a mechanism for adjusting the parameters''. Examples of adaptive control strategies include
+\begin{itemize}
+\item Adaptive pole placement or policy adaptation
+\item Iterative learning control (ILC)
+\item Gain scheduling
+\item Model reference adaptive control (MRAC)
+\item Model identification adaptive control (MIAC)
+\item Dual control strategies
+\end{itemize}
+though we will focus primarily on the last three.
+
+\subsection{Model Reference Adaptive Control (MRAC)}
+
+We will now introduce model reference adaptive control, which may be interpreted as a combined model-based and model-free adaptive control scheme. While it leverages a model, this model is responsible only for generating a reference output to track, and control adaptation is done directly via updating the policy. 
+Despite stating our desired adaptive control problem in discrete time, we will describe the MRAC approach in continuous time, which is the more standard setting. 
+A model reference adaptive controller is composed of four parts:
+\begin{enumerate}
+    \item A plant containing unknown parameters
+    \item A \textit{reference model} for compactly specifying the desired output
+    \item A feedback control law for containing adjustable parameters
+    \item An adaptation mechanism for updating the adjustable parameters
+\end{enumerate}
+The reference model is used to provide the ideal plant response which the adaptation mechanism should aim to achieve. Choice of reference model is therefore an art, similar to choice of a cost function. However, practically, it is more difficult than choice of a cost function. A cost function designer for an optimal control or reinforcement learning system aims to reflect their desired performance characteristics is a cost function that yields a tractable optimization problem. The designer of an MRAC system, on the other hand, must choose a model that achieves good performance. As such, an MRAC system designer is implicitly solving a policy optimization problem to choose a reference model. Practically, choice of these models is simplified by considering linear systems, and thus one may specify performance in terms of relatively simple characteristics such as damping. 
+
+One of the simplest approaches to MRAC is the so-called MIT rule. Let $\hat{\bm{y}}(t)$ denote the reference signal we aim to track, and $\bm{y}(t)$ denote the output of the system as a result of controller $\pol$, parameterized by $\param$. We will write specify the error $e(t) = \| \hat{\bm{y}}(t) - \bm{y}(t) \|_2$, as well as $J(t) = \frac{1}{2} e(t)^2$. Then, the MIT rule consists of taking gradient updates of the form 
+\begin{equation}
+    \dot{\param} = -\gamma \frac{\partial J}{\partial \param} = - \gamma e(t) \frac{\partial e}{\partial \param}(t)
+\end{equation}
+where $\gamma$ is a gain parameter governing update rate. This rule may be applied in discrete or continuous time (via an update difference equation or differential equation), and the joint dynamics of the system and the control parameter $\param$ may be analyzed for stability, typically with tools from Lyapunov stability theory. For a more complete discussion on MRAC and design of MRAC systems using Lyapunov theory, we refer the reader to \cite{aastrom2013adaptive}.
+
+\subsection{Model Identification Adaptive Control (MIAC)}
+
+Model identification adaptive control is the adaptive control scheme that logically follows from system identification: we will concurrently perform parameter estimation while controlling the system by using our estimate of the parameters. We will refer to our estimate of the model parameters as $\hat{\param}$. MIAC designs a control scheme that takes $\hat{\param}$ as an input in addition to the state $\st$. 
+
+
+% TODO need to clarify difference between MIAC and dual control more
+
+An important distinction within MIAC schemes is between \textit{certainty-equivalent} controllers and so-called \textit{cautious} controllers. Certainty-equivalent approaches, like certainty-equivalence in the LQG setting, have the policy as a function only of a point estimate of the estimated parameters. In the LQG setting, in which the state is estimated by Kalman filter, it can be shown that certainty-equivalent control performs equivalently to a control scheme incorporating other statistics of the state estimate. However, this principle does not in general hold, and thus certainty-equivalence in adaptive control is often a design choice to make stability analysis tractable. Cautious controllers, on the other hand, incorporate other information about the estimate of the parameters. For example, in the Bayesian setting, the posterior density of the parameters may be passed to the controller. This approach is known as ``cautious'' as it explicitly factors the uncertainty of the parameter estimate into the control decision, and thus will be more robust when uncertainty is high. However, because we are operating within the passively adaptive control setting, cautious methods will not include the expected uncertainty reduction due to future information, and thus may be overly conservative. 
+
+% examples of both CE and cautious strategies
+
+\subsection{Linear Quadratic Adaptive Control}
+
+One of the earliest works on adaptive control in the linear dynamics, quadratic cost setting was Simon \cite{simon1956dynamic}, who proposed using certainty-equivalence in the model estimation. His approach, however---to utilize the mean parameter estimates combined with an LQR controller---can converge to incorrect values with non-zero probability \cite{becker1985adaptive,abbasi2011regret}. Thus, it is necessary to augment the control strategy with heuristic approaches to actively explore the environment. A simple example exploration strategy is so-called $\epsilon$-greedy exploration, in which a random action is taken with probability $\epsilon$, and the system otherwise follows the certainty-equivalent optimal controller. While this performs reasonably well in the linear setting (where the definition of ``reasonably well'' may perhaps be debated), it perfoms poorly in nonlinear MDPs and discrete MDPs due to the highly ``local'' nature of the exploration \cite{moldovan2015optimism,osband2016generalization}. We expand on the problem of exploration in the next section. 
+
+% add more on exploration? Generally need to more deeply discuss this literature.
+
+
+
+\section{Probing, Planning for Information Gain, and Dual Control}
+
+Thus, we can augment our state with some statistics of our estimate (which we will write $\hat{\param}$) to yield hyperstate $\hyp$, and augment our dynamics with the dynamics of the estimation process. To solve the Bellman dynamic programming problem for this hyperstate is dual control. 
+
+The difference between these two approaches may seem subtle, but that former approach will result in a control scheme that optimally identifies the parameters for the purposes of control, whereas the latter approach will only passively adaptive the parameter estimate, and act with respect to that passive estimate. 
+
+% The concept of probing. The idea of planning for information gain. The practical difficulty of optimizing the dual control problem (with examples from Edison Tse papers). Approximate/local methods for dual control? Belief space planning?
+
+% planning in information space; belief MDP. Intractability. 
+
+
+\section{Further Reading}
+
+% Annaswamy, Sastry, Astrom

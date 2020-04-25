@@ -1,0 +1,412 @@
+\chapter{Regression}
+
+In this section we will develop the statistical tools behind regression in the linear and nonlinear setting. In the regression setting we aim to estimate the function that maps a set of \textit{inputs} (equivalently, independent variables, covariates or features) to a \textit{continuous}\footnote{This is in contrast to the classification setting in which we aim to map input variables to a (usually) finite set of output variables} output (or dependent variables). 
+Regression models are the foundation upon which the rest of the discussion of learning-based control will be built: we will typically pose the problem of learning dynamics models, value functions, or policies as regression problems. 
+For example, given a set of measurements of the system state and the control action, as well as the subsequent state, we can fit a dynamics model that captures the system dynamics. 
+
+Concretely, we will assume we are provided $\datdim$ pairs of the form $\st_i, y_i$. We will assume throughout our discussion on linear and Gaussian process regression that $y$ is a scalar, but the methods we will develop can easily be generalized to vector outputs. Let $\hat{y}_i$ denote our prediction given input $\st_i$ Then, we aim to find some function $\f$ such that, for prediction $\hat{y}_i = f(\st_i)$, $\hat{y}_i$ is close to $y_i$. While one could imagine posing this problem as an optimization problem or a question of statistical inference, it leaves several questions unanswered. First, we have not defined what it means for our predictions to be ``close'' to the measured output. Beyond this, and more subtly, we haven't addressed how the function $\f$ is represented. 
+
+We will begin with the least squares linear regression setting, in which $\f(\st)$ is linear. While we expect that this will be a review for most readers, we will use this setting to highlight several fundamental concepts in frequentist statistics---in which model parameters are assumed fixed and we do not specify prior beliefs over these parameters---and Bayesian statistics, which focuses on computing the posterior belief over model parameters given a prior. We will then discuss Gaussian process regression and neural network models, which are two highly influential approaches to nonlinear regression in reinforcement learning and adaptive control. Highlighting both the frequentist and the Bayesian approaches is critical, as neural network regression models are typically presented from the frequentist point of view, whereas Gaussian process models are Bayesian models. Moreover, both of these approaches have strengths and weaknesses that may be relevant to the downstream control task.
+
+\section{Linear Regression}
+
+\subsection{Minimum Mean Squared Error}
+
+In this section we will discuss regression with linear functions, 
+\begin{equation}
+    \hat{y} = \f(\st) = \param^T \st.
+\end{equation}
+Here, $\param$ are the parameters of the model. Note that the linear function above has an intercept at zero---there is no offset term. Thus, we will assume throughout our discussion of linear regression that the input vector is augmented with a $1$, so that 
+\begin{equation}
+    \hat{y} = \theta_0 + \param^T \st = 
+    \begin{bmatrix}
+    \theta_0 & \param^T 
+    \end{bmatrix} 
+    \begin{bmatrix}
+    1\\
+    \st
+    \end{bmatrix}.
+\end{equation}
+Thus when we write $\st$, simply imagine the input augmented with a 1 at the first entry. 
+
+Now that we have fixed our function class, we need to fix an objective (or some sort of concrete metric for our predictions being ``close'' to the measured data). We will choose the \textit{mean squared error} (MSE) cost function, 
+\begin{equation}
+    \J(\theta) = \frac{1}{\datdim}\sum_{i=1}^{\datdim} \left( y_i - \hat{y} \right)^2.
+\end{equation}
+The MSE cost (or equivalently, loss) function is the most common loss function in regression problems due to several favorable properties, both intuitive and computational (which we will see later in this section). Simply, minimizing this loss encodes the objective of minimizing the squared error in our prediction. Given our linear model parameterization and this loss function, we can now fully specify our regression problem as 
+\begin{equation}
+\begin{aligned}
+& \underset{\param}{\min}
+& & \frac{1}{\datdim}\sum_{i=1}^{\datdim} \left( y_i - \param^T \st_i \right)^2
+\end{aligned}
+\end{equation}
+which we will rewrite as 
+\begin{equation}
+\begin{aligned}
+& \underset{\param}{\min}
+& & \left\| \ob - X \param \right\|_2^2
+\end{aligned}
+\label{eq:least_squares}
+\end{equation}
+where we have multiplied the objective by $\datdim$ to simplify notation, and where $\ob^T = [y_1, \ldots, y_\datdim]$ and $X^T = [\st_1, \ldots, \st_\datdim]$\footnote{This matrix is typically referred to as the \textit{design matrix}.}. 
+
+First, note that this loss is convex in the model parameters and is differentiable with continuous derivative (in class $C^1$). From this, we know any point satisfying the first order necessary conditions for optimality is a global minimizer. Thus, to solve this problem, we will compute the gradient 
+\begin{align}
+    \nabla_{\param}\left\| \ob - X \param \right\|_2^2 = 2X^T X \param - 2 X^T \ob
+    \label{eq:LS_grad}
+\end{align}
+which, setting this gradient to zero, we have 
+\begin{equation}
+    X^T X \param = X^T \ob.
+    \label{eq:LS_grad2}
+\end{equation}
+If $X^T X$ is invertible then the optimal set of parameters is 
+\begin{equation}
+    \hat{\param} = (X^T X)^{-1} X^T \ob.
+\end{equation}
+We will write the set of parameters that solve the least squares problem in the overdetermined form (as above) as $\hat{\param}_{LS}$. When is $X^T X$ invertible? Note that
+\begin{equation}
+    X^T X = \sum_{i=1}^{\datdim} \st_i \st_i^T.
+\end{equation}
+Let $\stdim$ denote the dimension of the input. Then, we require $\datdim > \stdim$ for $X^T X$ to be full rank. However, at least $\stdim$ input is not a sufficient condition for $X^T X$ to be full rank; we require at least $\stdim$ linearly independent inputs. 
+
+An intuitive understanding of the requirements for the exact computation of $\hat{\param}_{LS}$ is provided by considering the problem geometrically. The invertibility of $X^T X$ implies the unique existence of a set of parameters $\param$ that minimizes \eqref{eq:least_squares}. In the case that we have fewer linearly independent data points than $\stdim$, \eqref{eq:LS_grad2} is not unique. Thus, there exist multiple values of $\param$ that result in zero error, and the system is underdetermined. A common approach to this is to optimize a regularized objective
+\begin{equation}
+\begin{aligned}
+& \underset{\param}{\min}
+& & \left\| \ob - X \param \right\|_2^2 + \lambda \|\param\|^2_2
+\end{aligned}
+\label{eq:least_squares_norm}
+\end{equation}
+where $\lambda$ is a positive scalar. By adding in the regularization term $\|\param\|^2_2$ (typically referred to as Ridge or Tikhanov regression, or $L_2$ regression due to the use of the 2-norm), we bias the optimal value of $\param$ toward having a small norm. Following the approach of \eqref{eq:LS_grad}, we have 
+\begin{equation}
+    \hat{\param} = (X^T X + \lambda I)^{-1} X^T \ob
+    \label{eq:LS_grad}
+\end{equation}
+for which the $X^T X + \lambda I$ is always full rank and thus invertible. We will write the solution to the ridge regularized problem as $\hat{\param}_{RR}$. For positive $\lambda$, $\| \ob - X \param\|_2^2$ may not be zero, and the estimator of the parameters is \textit{biased}. As $\lambda$ gets smaller, this bias will decrease. In the limit of $\lambda \to 0$, we have 
+\begin{equation}
+    (X^T X + \lambda I)^{-1} X^T \to X^T (X X^T)^{-1}
+\end{equation}
+yielding the \textit{least norm} solution to \eqref{eq:LS_grad2}, which we write
+\begin{equation}
+    \hat{\param}_{LN} = X^T (X X^T)^{-1} \ob.
+    \label{eq:least_norm}
+\end{equation}
+The least norm solution is the set of parameters that achieves zero loss on \eqref{eq:least_squares} while simultaneously minimizing the 2-norm of the parameter vector. So, is the least norm solution strictly preferred to a set of parameters computed via the ridge regression approach with a positive value of $\lambda$? Surprisingly, the answer is no. The added bias from the regularization helps generalize to new data points without \textit{overfitting} to the training dataset. Regularization is an important concept in machine learning, and we will discuss it further throughout this section, including showing the ridge regression problem arises naturally in Bayesian inference.
+
+% TODO add proof of least norm derivation; holds from a standard matrix identity
+
+% TODO add Lasso regularization discussion: introduce as a constraint, relax to regularization
+
+\subsection{Maximum Likelihood Estimation}
+
+Our previous discussion of least squares linear regression has avoided formalizing several implicit, necessary assumptions. In this section, we will investigate the method of \textit{maximum likelihood estimation}, which we will use to derive the least squares estimator from the previous section. Let $\mathcal{D} = \{(\st_i, y_i)\}_{i = 1}^{\datdim}$ denote the training dataset. The likelihood function is the conditional probability of the data given the parameter,
+\begin{equation}
+L(\param) = p(\mathcal{D}\mid \param).
+\end{equation}
+The goal of maximum likelihood estimation is to choose the parameter that maximizes the probability of the training data
+\begin{equation}
+    \param^* = \argmax_{\param} L(\param).
+\end{equation}
+In practice, we will typically consider the \textit{log likelihood}, $\ell(\param) = \log L(\param)$. Note that the maximizer of the log likelihood is equivalent to the maximizer of the likelihood due to the monotonicity of the log function. The log likelihood is more practical for several reasons. First, we will make the standard assumption that our training data are independent (one $(\st, y)$ pair we observe have no impact on any other pair) and identically distributed (\iid). Then, the joint distribution is
+\begin{equation}
+    p(\mathcal{D}\mid \param) = \prod_{i=1}^{\datdim} p(y_i \mid \st_i, \param)
+\end{equation}
+where we have discarded the distribution $p(\st_i \mid \param) = p(\st)$ as we assume it contains no information about $\param$. For the log likelihood, this joint takes the form 
+\begin{equation}
+    \log p(\mathcal{D}\mid \param) = \sum_{i=1}^{\datdim} \log p(y_i \mid \st_i, \param)
+\end{equation}
+resulting in the more convinient summation as opposed to the product. There are several other important properties that we will not detail here regarding the log likelihood; for example, due to the log-concavity of the exponential family, optimization of the log likelihood leads to a convex optimization problem for many common distributions. In practice, we will write maximum likelihood problems as minimization of the negative log likelihood to unify the notation. 
+
+\subsubsection{Linear regression via MLE}
+
+We will assume the underlying generative model of our data takes the form
+\begin{equation}
+    y = \st^T \param^* + \epsilon
+\end{equation}
+where $\param^*$ is the true underlying set of parameters and $\epsilon \sim \mathcal{N}(0, \sigma^2)$ is a Gaussian, zero-mean noise term. Given this model, the likelihood 
+\begin{equation}
+    p(y \mid \st, \param) = \mathcal{N}(\st^T \param, \sigma^2) = \frac{1}{\sigma \sqrt{2 \pi}} e^{-\frac{(y - \st^T \param)^2}{2 \sigma^2}}
+\end{equation}
+resulting in log likelihood of the dataset
+\begin{equation}
+    \ell(\param) = \sum_{i=1}^{\datdim} \log p(y_i \mid \st_i, \param)
+    = \sum_{i=1}^{\datdim} \left(-\log(\sqrt{2 \pi}) -\frac{(y_i - \st_i^T \param)^2}{2 \sigma^2} \right)
+\end{equation}
+which, discarding the constant term $\log(\sqrt{2 \pi})$ and the multiplicative term $2 \sigma^2$ as they do not effect the optimization problem, yields exactly the mean squared error criterion we considered in the previous section. The least squares model we have developed in this section (in particular, under the \iid assumption in combination with the assumption that we receive noise-free measurements of the input variable $\st$) is referred to as the \textit{ordinary least squares} (OLS) method.
+
+While in the process of this derivation we have assumed Gaussian additive noise, such as assumption is not necessary. We will refer to $\hat{\param}_{LS}$ as an estimator, which maps training data to a parameter estimate. The quality of this estimator can be evaluated under a loss function (note that this is a loss on the parameter estimate as opposed to a loss function on the prediction of the model). We will fix a MSE loss function on the parameter estimate of the form
+\begin{equation}
+    \E_{\mathcal{D}}\left[ \|\param^* - \hat{\param} \|^2_2\right].
+\end{equation}
+An estimator is said to be unbiased if 
+\begin{equation}
+    \E_{\mathcal{D}}[ \hat{\param} ] = \param^*.
+\end{equation}
+Finally, note that an estimator is \textit{linear} if it is a linear combination of the output measurements. 
+Then, we have the following result for the OLS estimator. If $\epsilon$ is sampled $\iid$ with zero mean, then the OLS estimator is the best (in terms of MSE loss) linear unbiased estimator (BLUE). This is referred to as the Gauss-Markov theorem. This result provides a basis for using the OLS estimator for a wide variety of settings, as it is flexible, interpretable, and performs well in a variety of settings. 
+
+% formalize this theorem
+
+\subsubsection{Basis Function Regression}
+
+We have so far restricted the class of models under consideration to functions linear in the input, $\st$. For many problems, this is an unrealistic model, and so it is desirable to consider a more expressive class of models. Because we have noise-free measurements of the input $\st$, we can instead consider nonlinear functions of these inputs. We will refer to these as \textit{features}, and write them as $\phi(\st)$, where $\phi$ is some nonlinear function. Note here that we fix $\phi$ is advance, and then optimize the weightings of these features. This approach will be generalized when we consider neural network models, for which we can directly optimize the features as a function of the training data. 
+
+Which features should we use? In general, it depends on your problem setting. For example, if we consider oscillatory pendulum dynamics, we should include sinusoidal features. Other common choices include polynomials of the inputs, indicators for certain regions, or more complex functions like radial basis functions. While increasing the number of features results in a more expressive model, it also increases the risk of overfitting, and so the features should be chosen carefully, for example via cross validation. We will not discuss feature selection in detail in this work, and we refer the reader to \cite{friedman2008elements}.
+
+% need visualization of overfitting for polynomial functions
+
+\subsection{Bayesian Inference and Bayesian Linear Regression}
+
+We have so far considered a frequentist parameter estimation setting in which we aim to choose a point estimate of some parameter to minimize a loss function. We will now look at Bayesian inference. In this setting, we will assume access to a prior distribution (or belief) over the parameter, which we will write $p(\param)$. This prior captures any information we have about the parameter before observing any other data. This could be influenced by knowledge available to a system designer (for example, rough estimates of dynamics parameters) or from data from other, related problems. Given this prior distribution combined with a likelihood function, we will use Bayes' rule to compute the posterior distribution over the parameters, via
+\begin{equation}
+    p(\param \mid \mathcal{D}) = \frac{p(\mathcal{D} \mid \param) p(\param)}{p(\mathcal{D})}.
+\end{equation}
+
+This approach has several strengths and weaknesses. Whereas frequentist estimation gives us a point estimate of a parameter (possibly with confidence intervals), Bayesian inference returns a full distribution over the parameter. This full representation of the uncertainty over a parameter can be incorporated downstream into decision-making algorithms, potentially resulting in increased robustness. However, the major limitation of Bayesian inference is that it is analytically intractable in most cases: for arbitrary models for the prior and the likelihood, the posterior density likely does not have a convenient, closed-form representation. This is a result of the need to compute the marginal likelihood, $p(\mathcal{D})$. This can be computed via
+\begin{equation}
+    \int p(\mathcal{D}\mid\param) p(\param) d\param
+\end{equation}
+which is typically an intractable integral. In general, practitioners must therefore turn to sampling-based or discrete approximations. However, one special case for which the posterior can be computed exactly is the case for which the prior and the likelihood are Gaussian. This fact underlies, for example, the Kalman filter, and will be critical to our development of Bayesian least squares. 
+
+\subsubsection{Bayesian Least Squares}
+
+We will now show how the Bayesian inference can be applied to the least squares problem. Concretely, we will consider the \textit{conditional} density estimation problem
+\begin{equation}
+p(\param\mid \ob, X) = \frac{p(\ob\mid \param, X) p(\param)}{p(\ob\mid X)}.
+\end{equation}
+As previously, nonlinear transformations of the input variables may be used, but for simplicity of notation we will use un-transformed inputs. Let 
+\begin{equation}
+    p(\param) = \N(\bm{\mu}_0, \Sigma_0) = \frac{1}{\sqrt{(2 \pi)^{\stdim} |\Sigma_0|}} \exp(-\frac{1}{2}(\param - \bm{\mu}_0)^T \Sigma_0^{-1} (\param - \bm{\mu}_0))
+\end{equation}
+denote the prior over $\param$, where $\bm{\mu}_0$ and $\Sigma_0$ are the mean and covariance respectively. As in the previous section, we will assume $\epsilon \sim \N(0, \sigma^2)$, and that this noise term is sampled \iid. We will assume that the noise covariance, $\sigma^2$, is known, but in general this assumption is fairly easily relaxed. 
+
+To compute the posterior over $\param$, note that 
+\begin{equation}
+p(\param \mid \mathcal{D}) \propto \exp(-\frac{1}{2}(\param - \bm{\mu}_0)^T \Sigma_0^{-1} (\param - \bm{\mu}_0)) \exp(-\frac{1}{2\sigma^2} (\ob - X \param)^T (\ob - X \param) )
+\end{equation}
+where we have ignored the normalizing constants. Looking at the exponentiated terms, we have 
+\begin{align}
+    & -\frac{1}{2}(\param - \bm{\mu}_0)^T \Sigma_0^{-1} (\param - \bm{\mu}_0) + -\frac{1}{2\sigma^2} (\ob - X \param)^T (\ob - X \param) ) \label{eq:blr1}\\
+    \propto & -\frac{1}{2} (\param - \bm{\mu}_{\datdim})^T \Sigma_{\datdim}^{-1} (\param - \bm{\mu}_{\datdim})
+\end{align}
+where
+\begin{align}
+    \Sigma_{\datdim} &= (\frac{1}{\sigma^2} X^T X + \Sigma_0^{-1})^{-1} \label{eq:blr_var}\\
+    \bm{\mu}_{\datdim} &= \Sigma_{\datdim}^{-1} (\frac{1}{\sigma^2} X^T y + \Sigma_0^{-1} \bm{\mu}_0) \label{eq:blr_mean}.
+\end{align}
+% double check this
+The above can be shown by completing the square for \eqref{eq:blr1}. We can now notice that this is an unnormalized Gaussian density for $\param$ with mean and variance given by \eqref{eq:blr_mean} and \eqref{eq:blr_var}, or
+\begin{equation}
+    p(\param \mid \mathcal{D}) = \N(\bm{\mu}_{\datdim}, \Sigma_{\datdim}).
+\end{equation}
+This result is quite remarkable: we have incorporated our measurements to give a full posterior distribution over our model parameters, as opposed to a simple point estimate. However, for applications in decision-making and control, we care about the \textit{predictive distribution}, or $p(y^* \mid \st, \mathcal{D})$ where we write $\st^*, y^*$ to denote \textit{test points}, or an arbitrary prediction problem given the training dataset. To derive the posterior predictive, we will turn to following identity.
+\begin{lemma}
+Let $\st \sim \N(\bm{\mu}_{\st}, \Sigma_{\st})$ and $\ob \sim \N(\bm{\mu}_{\ob}, \Sigma_{\ob})$, with $\st$ and $\ob$ independent. Then $A \st + B \ob \sim \N (A \bm{\mu}_{\st} + B \bm{\mu}_{\ob}, A \Sigma_{\st} A^T + B \Sigma_{\ob} B^T)$
+\end{lemma}
+\begin{proof}
+See \cite{petersenmatrix}, section 8.
+\end{proof}
+Given this result, note that 
+\begin{equation}
+    y^* = \param^T \st^* + \epsilon
+\end{equation}
+where $\param \sim p(\param\mid \mathcal{D})$ with $\param^T$ and $\epsilon$ independent. Thus, applying the above lemma, we have
+\begin{equation}
+    p(y\mid \st, \mathcal{D}) = \N(\bm{\mu}_{\datdim}^T \st^*, \st^{*,T} \Sigma^{-1}_{\datdim} \st^* + \sigma^2).
+\end{equation}
+Therefore, given the Gaussian model assumption, we can exactly compute the posterior predictive distribution.
+
+% TODO add images
+
+\subsubsection{Maximum a Posteriori (MAP) Estimation}
+
+A common approach to incorporate prior information into parameter estimation without performing fully Bayesian inference is to compute the \textit{maximum a Posteriori} (MAP) parameter estimate, defined as 
+\begin{equation}
+    \hat{\param}_{MAP} = \argmax_{\param}p(\param\mid \mathcal{D})= \argmax_{\param}p(\mathcal{D}\mid \param) p(\param) \label{eq:map}
+\end{equation}
+where we drop the marginal likelihood from the denominator because it does not effect the maximization (and because we do not need to compute a probability density and thus we do not have the requirement that the output integrates to one). Examining \eqref{eq:map}, we can see that it corresponds to the maximum likelihood estimate, with an added term representing the prior belief. As such, it allows a practitioner to include prior information without the computational challenges associated with general Bayesian inference. Indeed, as the prior becomes flatter---as all values of the parameter become equally likely under the prior---the MAP estimator approaches the max likelihood estimator. 
+
+Examining the MAP estimator for the Bayesian least squares problem, we have 
+\begin{equation}
+    \hat{\param}_{MAP} = \bm{\mu}_{\datdim}
+\end{equation}
+as the max of a Gaussian is the mean. Let us choose a prior with mean $\bm{\mu}_0 = 0$ and variance $\Sigma_0 = I$ and fix the noise variance as $\sigma^2 = \lambda$. Then, the MAP estimator is 
+\begin{equation}
+    \hat{\param}_{MAP} = (X^T X + \lambda I)^{-1} X^T \ob
+\end{equation}
+which is exactly the ridge regression (or $L_2$ regularized) least squares estimator. This gives us some insight into why a positive choice of $\lambda$ typically outperforms the least norm solution: the ridge regression approach imposes an implicit prior on the value of $\param$.
+
+
+\section{Gaussian Processes}
+
+% TODO add def of stochastic process; more formal discussion
+% add images of GPs
+% add discussion of kernel functions
+
+We have discussed an approach to nonlinear regression using fixed basis functions. In this section, we will discuss Gaussian process regression, as well as the (strong) connections to Bayesian linear regression. Gaussian process regression, instead of performing inference over a finite collection of weights as in the previous section, performs inference directly over \textit{functions}. We previously addressed the regression problem via a \textit{parametric} approach in which  we fixed our model to be a linear function of some (possibly nonlinearly transformed) features. In contrast, Gaussian process regression instead performs \textit{nonparametric} inference, in which the class of models is not specified via a finite set of parameters. We will begin by defining a Gaussian process
+\begin{definition}[\cite{rasmussen2003gaussian}]
+A \textit{Gaussian process} is a time-continuous stochastic process such that for every finite collection of time indices $t_1, \ldots, t_k$, the collection if random variables $y_{t_1}, \ldots, y_{t_k}$ is jointly Gaussian. 
+\end{definition}
+
+A Gaussian process $f(\st)$ is fully specified by its mean
+\begin{align}
+    \mu(\st) = \E[f(\st)]
+\end{align}
+and covariance 
+\begin{equation}
+    k(\st,\st') = \E[(f(\st) - \mu(\st))(f(\st') - \mu(\st'))].
+\end{equation}
+Thus, the behavior of the GP regression model is governed entirely by these quantities. The mean is typically assumed to be zero, although this is not necessary. We refer to $k(\cdot, \cdot)$ as the \textit{kernel function}. We require the kernel function to be \textit{symmetric}: 
+\begin{equation}
+    k(\st, \st') = k(\st', \st),
+\end{equation} 
+as well as \textit{positive definite}, or 
+\begin{equation}
+    K = \begin{bmatrix}
+    k(\st_1, \st_1) & \ldots & k(\st_1, \st_k)\\
+    \vdots & & \vdots\\
+    k(\st_k, \st_1) & \ldots & k(\st_k, \st_k)
+    \end{bmatrix} \succ 0
+\end{equation}
+for any $\st_1, \ldots, \st_k$. These conditions are intuitive: they guarantee that the variance matrix associated with the GP for an arbitrary set of inputs is well-defined. A kernel satisfying these properties is a \textit{Mercer} or positive definite kernel. 
+
+As an example of a simple Gaussian process model, let us consider Bayesian linear regression on features $\phi(\st)$. Fixing a prior $\param \sim \N(0, \Sigma_0)$, we have 
+\begin{align}
+    \mu(\st) &= \E[\param^T \phi(\st)] = 0\\
+    k(\st, \st') &= \phi(\st)^T \E[\param \param^T] \phi(\st) = \phi(\st)^T \Sigma_0 \phi(\st)
+\end{align}
+As we will see later, using the machinery of kernel GP regression to perform Bayesian linear regression with a pre-specified set of features is inefficient. However, let us consider the squared exponential kernel
+\begin{equation}
+    k(\st,\st') = \exp(-\frac{1}{2 \ell}\|\st - \st'\|^2_2)
+\end{equation}
+where $\ell$ is a length scale hyperparameter. In this case, the set of basis functions resulting in this kernel is actually infinite dimensional. Indeed, every Mercer kernel corresponds to a (potentially) infinite dimensional set of features, and the choice of kernel allows intuitive control of how the regression model behaves, and implies a distribution over functions. 
+
+To see how we can use a GP regression model to make predictions, we will rely on the following result.
+\begin{lemma}[\cite{rasmussen2003gaussian}]
+\label{lem:gp1}
+Let $\ob_1, \ob_2$ be jointly Gaussian such that 
+\begin{equation}
+    \begin{bmatrix}
+    \ob_1\\
+    \ob_2
+    \end{bmatrix} \sim \N(\begin{bmatrix}
+    \bm{\mu}_1\\
+    \bm{\mu}_2
+    \end{bmatrix}, 
+    \begin{bmatrix}
+    \Sigma_{11} & \Sigma_{12}\\
+    \Sigma_{21} & \Sigma_{22}
+    \end{bmatrix}
+    ).
+\end{equation}
+Then,
+\begin{equation}
+    p(\ob_1 \mid \ob_2) = \N(\bm{\mu}_1 + \Sigma_{21} \Sigma_{22}^{-1} (\ob_2 - \bm{\mu}_2), \Sigma_{11} - \Sigma_{21} \Sigma_{22}^{-1} \Sigma_{12})
+\end{equation}
+\end{lemma}
+We will assume a model of the form $y = f(\st) + \epsilon$, and we will write a test point as $\st^*$. Then, given training data $\mathcal{D} = \{(\st_i, y_i)\}_{i=1}^{\datdim}$, we note that 
+\begin{equation}
+    \begin{bmatrix}
+    f(\st^*)\\
+    \ob
+    \end{bmatrix} \sim \N(\begin{bmatrix}
+    0\\
+    0
+    \end{bmatrix}, 
+    \begin{bmatrix}
+    k(\st^*, \st^*) & K(X, \st^*)\\
+    K(\st^*, X) & K(X, X) + \sigma^2 I
+    \end{bmatrix}
+    ).
+\end{equation}
+where 
+\begin{equation}
+    K(\st^*, X) = \begin{bmatrix}
+    k(\st^*, \st_1)\\
+    \vdots\\
+    k(\st^*, \st_{\datdim})
+    \end{bmatrix}
+\end{equation}
+and 
+\begin{equation}
+    K(X, X) = \begin{bmatrix}
+    k(\st_1, \st_1) & \ldots & k(\st_1, \st_{\datdim})\\
+    \vdots & & \vdots\\
+    k(\st_{\datdim}, \st_1) & \ldots & k(\st_{\datdim}, \st_{\datdim})\\
+    \end{bmatrix}.
+\end{equation}
+Thus, applying Lemma \ref{lem:gp1}, we can see that $p(f(\st^*) \mid \mathcal{D})$ is Gaussian with mean
+\begin{equation}
+    \E[f(\st^*)] = K(\st^*, X) (K(X, X) + \sigma^2 I)^{-1} \ob
+\end{equation}
+and variance
+\begin{equation}
+    \text{var}(f(\st^*)) = k(\st^*, \st^*) - K(\st^*, X) (K(X, X) + \sigma^2 I)^{-1} K(X, \st^*).
+\end{equation}
+From this, using the fact that the sum of independent Gaussians is Gaussian, the predictive variance is 
+\begin{equation}
+    \text{var}(y^*) = \text{var}(f(\st^*)) + \sigma^2.
+\end{equation}
+and the predictive mean is $\E[y^*] = \E[f(\st^*)]$. Given these update rules, we have the following procedure for performing regression with Gaussian process models. First, we select a kernel function (there are many to choose from; see \cite{rasmussen2003gaussian} or \cite{murphy2012machine} for a discussion of possible choices). Then, we compute the kernel matrices $k(\st^*, \st^*), K(\st^*, X)$, and $K(X,X)$. Finally, we use the conditioning equations above to compute our posterior predictive distribution. 
+
+The choice of kernel can result in much more expressive models than are easily designed with standard Bayesian linear regression. Moreover, whereas the expressivity of a standard Bayesian linear regression model is limited by the finite set of parameters, the function representation of the GP can be infinitely improved---indeed, kernel GP regression can asymptotically approximate any continuous function. %TODO double check this
+So, are GP regression models always better than standard Bayesian linear regression? For small datasets, they perform quite well and are a strong choice. However, for larger datasets, the computational performance suffers. Note that the posterior inference procedure requires inverting the matrix $K(X,X)$ (plus an identity term), which is $\datdim \times \datdim$. Matrix inversion has (practically) complexity $O(\datdim^3)$, and so this inversion step can be prohibitively slow for large training datasets. 
+
+% TODO add discussion of kernels; add images of functions 
+
+\section{Neural Networks}
+
+Our discussion has so far focused on models that are linear in a pre-specified set of features. In the case of standard or Bayesian linear regression, these features were chosen explicitly. In the case of Gaussian process regression, the system designer chose a kernel function which induced a set of features. The previously presented models are useful for a reason: they are simply, effective, and training the model (or computing the posterior) corresponds to either a closed-form solution or to a convex optimization problem. However, these methods come with the limitation that we must explicitly choose our features, and this is a difficult task in itself. 
+
+In this section, we will discuss neural network models. These models are composed of the composition of simple nonlinear transformations of the inputs. As such, neural network models can be viewed as nonlinear function parameterizations. Indeed, neural networks are an expressive and general function parameterization. However, the optimization problem associated with choosing the parameters of these nonlinear models results in a highly non-convex optimization problem. As a consequence, neural network models largely fell out of favor compared to convex  models. In the early 2010s, extremely strong empirical performance on image recognition benchmarks brought these models back to the forefront of both research and commercial application \cite{krizhevsky2012imagenet}. Currently, they are the predominant regression model for nonlinear system identification and reinforcement learning. While neural networks are an extremely broad topic, and one that is growing rapidly, we will focus in this section on a simple, minimal discussion of neural network models. For a deeper discussion, we refer the reader to \cite{goodfellow2016deep}.
+
+\subsection{The Perceptron}
+
+% TODO add image of perceptron decision boundary
+
+Before introducing a full neural network model, we will begin with introducing the minimal unit of the network, the \textit{perceptron}. Note that while we use the term perceptron to a general hidden unit, it is often frequently used to discuss the perceptron learning algorithm which we will not discuss. The perceptron is defined as 
+\begin{equation}
+    h(\st) = \sigma( \bm{w}^T \st)
+\end{equation}
+where $\sigma(\cdot)$ is a nonlinear function, typically referred to as a threshold function, and $\bm{w}$ is a vector of weights. Classically, the threshold function is one that (approximately) maps to 1 if $\bm{w}^T \st > 0$, and $0$ otherwise. This hard thresholding is typically relaxed to a soft threshold to result in a smooth gradient. A widespread threshold function is the logistic function
+\begin{equation}
+    \sigma(x) = \frac{1}{1 + e^{-x}}.
+\end{equation}
+This nonlinearity leads to a simple binary classifier, where the weights $\bm{w}$ result in a linear decision boundary. 
+While nonlinearities corresponding to binary classifiers were originally dominant, the ReLU (rectified linear unit) nonlinearity
+\begin{equation}
+    \sigma(x) = \begin{cases}
+    x \,\,\text{for}\,\, x > 0\\
+    0 \,\,\text{otherwise}
+    \end{cases}
+\end{equation}
+has gained substantial popularity recently due to good empirical performance.
+
+\subsection{Feed-Forward Neural Networks}
+
+By combining perceptrons (or hidden units), we arrive at the feed-forward neural network. The term feed-forward refers to the fact that the hidden units will be stacked in a graph without loops or temporal dependency, as is typical in recurrent networks, and will not include features other than the previously described simple nonlinear hidden units, as in for example convolutional networks. We will refer to a \textit{hidden layer} as a nonlinear function of the form
+\begin{equation}
+    \bm{h} = \sigma(W \st)
+\end{equation}
+where $\sigma$ is applied element-wise. The simplest feed-forward neural network is one with a single hidden layer
+\begin{align}
+    \bm{h} &= \sigma( W_1 \st)\\
+    \ob &= W_2 \bm{h}
+\end{align}
+where $W_1, W_2$ are weight matrices. This provides a nonlinear function parameterization. This can be combined with any loss function---for regression, the most common choice is the mean squared error loss function that we have discussed previously. This neural network is non-convex, and thus simple gradient descent algorithms can not provide guarantees on finding the global minima. However, in practice and combined with several effective training techniques including regularization schemes, these models perform well despite the non-convexity of the associated optimization problem. While we've considered only single hidden layer networks so far, we can also consider \textit{deep} neural network models with multiple hidden layers; for example of the form
+\begin{align}
+    \bm{h}_1 &= \sigma( W_1 \st)\\
+    \bm{h}_2 &= \sigma( W_2 \bm{h}_1)\\
+    \ob &= W_3 \bm{h}_2.
+\end{align}
+This increased depth allows representation of increasingly complex features. 
+
+% \subsection{Backpropagation}
+
+
+% TODO add recurrent models, convolutional models, others?
+% Bayesian inference for neural networks
+% stochastic gradient descent
+% regularization
+% VAE? LSTM? 

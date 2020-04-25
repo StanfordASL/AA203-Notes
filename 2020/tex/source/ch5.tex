@@ -1,0 +1,177 @@
+\chapter{Direct Methods for Optimal Control}
+
+In the previous section we considered indirect methods to optimal control, in which the necessary conditions for optimality were first applied, yielding a two-point boundary value problem that was solved numerically. We will now consider the class of direct methods, in which the optimal control problem is first discretized, and then the resulting discrete optimization problem is solved numerically. 
+
+\section{Direct Methods}
+
+We will write our original continuous optimal control problem,
+\begin{equation}
+\begin{aligned}
+\label{eq:ocp}
+& \underset{\ac}{\min} & & \int_0^{t_f} \cost(\st(t),\ac(t),t) dt \\
+& \textrm{s.t.} & & \stdot(t) = \f(\st(t), \ac(t),t), t \in [0, t_f]\\
+& & & \st(0) = \st_0\\
+& & & \st(t_f) \in \mathcal{M}_f\\
+& & & \ac(t) \in \mathcal{U}, t\in [0,t_f]
+\end{aligned}
+\end{equation}
+where $\mathcal{M}_f = \{\st\in \R^n : F(\st) = 0\}$ and where we have, for simplicity, assumed zero terminal cost and $t_0 = 0$. We will use forward Euler discretization of the dynamics. We select a discretization $0 = t_0 < t_1 < \ldots < t_N = t_f$ for the interval $[0,t_f]$, and we will write $\st_{i+1} \approx \st(t), \ac_i \approx \ac(t)$ for $t \in [t_i, t_{i+1}]$, and $\st_0 \approx \st(0)$. Denoting $h_i = t_{i+1} - t_i$, the continuous time optimal control problem is transcibed into the nonlinear constrained optimization problem 
+\begin{equation}
+\begin{aligned}
+\label{eq:nlop}
+& \underset{\st,\ac}{\min} & & \sum_{i=0}^{N-1} h_i \cost(\st_i,\ac_i,t_i) \\
+& \textrm{s.t.} & & \st_{i+1} = \st_i + h_i \f(\st_i,\ac_i,t_i), i = 0, \ldots, N-1\\
+& & & \st_N \in \mathcal{M}_f\\
+& & & \ac_i \in \mathcal{U}, i = 0, \ldots, N-1
+\end{aligned}
+\end{equation}
+
+\subsection{Consistency of Time Discretization}
+
+Having performed this discretization, a reasonable (and important) sanity check on the validity of the direct approach is whether we recover the original problem in the limit of $h_i \to 0$. For simplicity, we will drop the time-dependence of the cost and dynamics. We will write the Lagrangian for (\ref{eq:nlop}) as 
+\begin{equation}
+    \mathcal{L} = \sum_{i=0}^{N-1} h_i \cost(\st_i,\ac_i) + \sum_{i=0}^{N-1} \bm{\lambda}_i^T (\st_i + h_i \f(\st_i,\ac_i) - \st_{i+1}).
+\end{equation}
+Then, the KKT conditions are
+\begin{align}
+    0 &= h_i \frac{\partial \cost}{\partial \st_i}(\st_i,\ac_i) + \bm{\lambda}_i - \bm{\lambda}_{i-1} + h_i \frac{\partial \f}{\partial \st_i}^T(\st_i,\ac_i) \bm{\lambda}_i\\
+    0 &= h_i \frac{\partial \cost}{\partial \ac_i}(\st_i,\ac_i) + h_i \frac{\partial \f}{\partial \ac_i}^T(\st_i,\ac_i) \bm{\lambda}_i
+\end{align}
+Rearranging, we have
+\begin{align}
+    \frac{\bm{\lambda}_i - \bm{\lambda}_{i-1}}{h_i} &=- \frac{\partial \f}{\partial \st_i}^T(\st_i,\ac_i) \bm{\lambda}_i- \frac{\partial \cost}{\partial \st_i}(\st_i,\ac_i)\\
+    0 &= \frac{\partial \f}{\partial \ac_i}^T(\st_i,\ac_i) \bm{\lambda}_i + \frac{\partial \cost}{\partial \ac_i}(\st_i,\ac_i).
+\end{align}
+Let $\cst(t) = \bm{\lambda}_i$ for $t \in [t_i, t_{i+1}], i = 0, \ldots, N-1$ and $p(0) = \lambda_0$. Then, the above are direct discretizations of the necessary conditions for (\ref{eq:ocp}), 
+\begin{align}
+    \dot{\cst}(t) &=- \frac{\partial \f}{\partial \st}^T(\st(t),\ac(t)) \cst_i- \frac{\partial \cost}{\partial \st}(\st(t),\ac(t))\\
+    0 &= \frac{\partial \f}{\partial \ac}^T(\st(t),\ac(t)) \cst(t) + \frac{\partial \cost}{\partial \ac}(\st(t),\ac(t)).
+\end{align}
+
+\section{Transcription Methods}
+
+A fundamental choice in the design of numerical algorithms for direct optimization of the discretized optimal control problem is whether to optimize over the state and action variables (a method known as collocation or simultaneous optimization) or strictly over the action variables (known as shooting).
+
+\subsection{Collocation Methods}
+
+Collocation methods optimize both the state variables and the control input at a fixed, finite number of times, $t_0, \ldots, t_i, \ldots, t_N$. Moreover, the dynamics constraints are enforced at these points. As such, it is necessary to choose a finite-dimensional representation of the trajectory between these points. This rough outline leaves unspecified a large number of algorithmic design choices. 
+
+First, how are the dynamics constraints enforced? Both derivative and integral constraints exist. The derivative approach enforces that the derivative of the state with respect to time of the parameterized trajectory is equal to the given system dynamics. The integral approach relies on integrating the given dynamics and enforcing agreement between this and the trajectory parameterization. In these notes, we will focus on the derivative approach. 
+
+Second, a choice of trajectory parameterization is required. We will primarily discuss Hermite-Simpson methods in herein, which parameterize each subinterval of the trajectory (in $[t_i, t_{i+1}]$) with a cubic polynomial. Note that the choice of a polynomial results in integral and derivative constraints being relatively simple to evaluate. However, a wide variety of parameterizations exist. For example, pseudospectral methods represent the entire trajectory as a single high-order polynomial. 
+
+We will now outline the Hermite-Simpson method as one example of direct collocation. Having selected a discretization $0 = t_0 < t_1 < \ldots < t_N = t_f$, we denote $h_i = t_{i+1} - t_i$. In every subinterval $[t_i, t_{i+1}]$, we approximate $\st(t)$ with a cubic polynomial
+\begin{equation}
+    \st(t) = \bm{c}_0^i + \bm{c}_1^i (t - t_i) + \bm{c}_2^i (t-t_i)^2 + \bm{c}_3^i (t - t_i)^3 
+\end{equation}
+which yields derivative 
+\begin{equation}
+    \st(t) = \bm{c}_1^i + 2 \bm{c}_2^i (t-t_i) + 3 \bm{c}_3^i (t - t_i)^2. 
+\end{equation}
+Writing $\st_i = \st(t_i), \st_{i+1} = \st(t_{i+1}), \stdot_i = \stdot(t_i), \stdot_{i+1} = \stdot(t_{i+1})$, we may write 
+\begin{equation}
+    \begin{bmatrix}
+    \st_i\\
+    \stdot_{i}\\
+    \st_{i+1}\\
+    \stdot_{i+1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+I & 0 & 0 & 0\\
+0 & I & 0 & 0\\
+I & h_i I & h_i^2 I & h_i^3 I\\
+0 &  I & 2 h_i I & 3 h_i^2 I
+\end{bmatrix}
+    \begin{bmatrix}
+    \bm{c}_0^i\\
+    \bm{c}_1^i\\
+    \bm{c}_2^i\\
+    \bm{c}_3^i
+\end{bmatrix}
+\end{equation}
+which in turn results in 
+\begin{equation}
+\begin{bmatrix}
+    \bm{c}_0^i\\
+    \bm{c}_1^i\\
+    \bm{c}_2^i\\
+    \bm{c}_3^i
+\end{bmatrix}
+=
+\begin{bmatrix}
+I & 0 & 0 & 0\\
+0 & I & 0 & 0\\
+-\frac{3}{h_i^2} I & -\frac{2}{h_i} I & \frac{3}{h_i^2} I & -\frac{1}{h_i} I\\
+\frac{2}{h_i^2} I & \frac{1}{h_i^2} I & -\frac{2}{h_i^3} I & \frac{1}{h_i^2} I
+\end{bmatrix}
+\begin{bmatrix}
+    \st_i\\
+    \stdot_{i}\\
+    \st_{i+1}\\
+    \stdot_{i+1}
+\end{bmatrix}.
+\end{equation}
+Choosing intermediate times $t_i^c = t_i + \frac{h_i}{2}$ (collocation points), we can define interpolated controls $\ac^c_i = \frac{\ac_i + \ac_{i+1}}{2}$. From the above, we have
+\begin{align}
+    \st^c_i \vcentcolon=& \st(t_i + \frac{h_i}{2}) = \frac{1}{2} (\st_i + \st_{i+1}) + \frac{h_i}{8} (\f(\st_i,\ac_i,t_i) - \f(\st_{i+1},\ac_{i+1},t_{i+1}))\\
+    \stdot^c_i \vcentcolon=& \stdot(t_i + \frac{h_i}{2}) = -\frac{3}{2h_i} (\st_i + \st_{i+1}) - \frac{1}{4} (\f(\st_i,\ac_i,t_i) + \f(\st_{i+1},\ac_{i+1},t_{i+1})).
+\end{align}
+Thus, we can write our discretized problem as 
+\begin{equation}
+\begin{aligned}
+\label{eq:ocp}
+& \underset{\ac_{0:N-1},\st_{0:N}}{\min} & & \sum_{i=0}^{N-1} h_i \cost(\st(t),\ac(t),t)\\
+& \textrm{s.t.} & & \stdot_i^c - \f(\st^c_i, \ac^c_i,t_i^c) = 0, i = 0, \ldots, N-1\\
+& & & F(\st_N) = 0\\
+& & & \ac(t) \in \mathcal{U}, i = 0, \ldots, N-1
+\end{aligned}
+\end{equation}
+
+% Describe the generalized procedure which consists of discretizing both the state and the control in time. This is achieved by discretizing the variables with high-order polynomials in each subintervals $[t_i,t_{i+1}]$.
+
+% Say that in the literature there are lots of such discretizations and the choice relies on the fact that some discretizations fit better than others for specific problem. Moreover, the higher precision you want, the higher order of polynomial you might be obliged to choose.
+
+% Because of its generality and high precision, it is worth introducing two methods: Hermite polynomials (done in lecture 12) and Runge-Kutta 2 (easily found online). Say something about their stability property: unlike explicit Euler, the numerical solution does not explode with the number of discretization points.
+
+% It might be worth introducing general explicit Runge-Kutta schemes for any order of polynomials, because they easily generalize Hermite and other collocation methods. For completeness, I would also provide some proof of convergence, like the fact that for $h\rightarrow0$, we have that the difference the solution of the original ODE and its Runge-Kutta approximation goes to zero with a speed $h^p$, where $p$ is the order of the Runge-Kutta scheme (or at least for the second-order scheme. I might help you doing this if needed).
+
+\subsection{Shooting Methods}
+
+Shooting methods solve the discrete optimization problem via optimizing only over the control inputs, and integrating the dynamics forward given these controls. A simple approach to the forward integration is the approach we have discussed above, in which forward Euler integration is used. Single-shooting methods directly optimize the controls for the entire problem. These approaches are fairly efficient for low dimension, short horizon problems, but typically struggle to scale to larger problems. Multiple shooting methods, on the other hand, optimize via shooting over subcomponents of the problem, and enforce agreement between the trajectory segments generated via shooting within each subproblem. These methods are therefore a combination of shooting methods and collocation methods. Generally, numerical solvers for shooting problems will, given an initial action sequence, linearize the trajectory and optimize the objective function with respect to those linearized dynamics to obtain new control inputs.
+
+% Add comparisons with indirect shooting. More precisely, shootings are more robust but are computational more demanding. On the other hand, indirect shootings are cheaper and converge fast, but they suffer from sensitivity issues (i.e., less robustness) because they are quite hard to correctly initialize.
+
+
+\subsection{Sequential Convex Programming}
+
+Direct optimization of the discretized nonlinear control problem typically results in a non-convex optimization problem, for which finding a good solution may be difficult or impossible. The source of this non-convexity is typically the dynamics (and sometimes the cost function). The key idea of sequential convex programming (SCP) is to iterative re-linearize the dynamics (and construct a convex approximation of the cost function, if it is non-convex) around a nominal trajectory. 
+
+First, we will assume for this outline that the cost $\cost$ is convex. Let $(\st_0(\cdot),\ac_0(\cdot))$ be a nominal tuple of trajectory and control (which is not necessarily feasible). We linearize the dynamics around this trajectory:
+\begin{equation}
+    \f_1(\st,\ac,t) = \f(\st_0(t),\ac_0(t),t) + \frac{\partial \f}{\partial \st}(\st_0(t), \ac_0(t), t) (\st - \st_0(t)) + \frac{\partial \f}{\partial \ac}(\st_0(t), \ac_0(t), t) (\ac - \ac_0(t)).
+\end{equation}
+We can then solve the linear optimal control problem (with $k=0$, initially),
+\begin{equation}
+\begin{aligned}
+\label{eq:ocp}
+& {\min} & & \int_{0}^{t_f} \cost(\st(t),\ac(t),t) dt\\
+& \textrm{s.t.} & & \stdot(t) = \f_{k+1}(\st(t),\ac(t),t), t \in [0,t_f]\\
+& & & \st(0) = \st_0\\
+& & & \st(t_f) = \st_f\\
+& & & \ac(t) \in \mathcal{U}, t \in [0,t_f]
+\end{aligned}
+\end{equation}
+where the dynamics are linear and the cost function is quadratic. Discretizing this continuous control problem yields a tractable convex optimization problem with dynamics $\st_{i+1} = \st_i + h_i \f(\st_i,\ac_i,t_i), i=0, \ldots, N-1$. We then iterate this procedure until convergence is achieved with the new trajectory.
+
+% [Gu] = http://asl.stanford.edu/wp-content/papercite-data/pdf/Bonalli.Cauligi.Bylard.Pavone.ICRA19.pdf
+
+% Trust-regions: these (either hard or soft) constraints must be added to prevent bad linearizations. Also, the size of the trust regions should be adapted during iterations depending on how good the linearization is (follow sections II.B and III.A of [Gu]).
+% Put an algorithm that provides SCP. For this, you might copy Algorithm 1 from [Gu]. Explain and justify each line of such algorithm (you can copy what we wrote in [Gu]).
+% Spend some words (maybe just a paragraph) to justify the approach. The key fact is to say that when the procedure converges (and to make it converge we may use several numerical tricks, one of them being trust regions), we obtain a local solution (in the sense of the PMP) for the original optimal control problem (I might help you doing this if needed).
+
+% TODO discuss iLQR/DDP in the context of SCP/transcription methods
+
+\section{Further Reading}
+
+A broad introduction to direct methods for trajectory optimization is presented in \cite{kelly2017transcription}. This tutorial also features a discussion of trajectory optimization for hybrid systems, which we have not discussed in this section, as well as numerical solver features. For a more comprehensive review of direct methods for trajectory optimization by the same author with an emphasis on collocation methods, see \cite{kelly2017introduction}.

@@ -1,0 +1,77 @@
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{accents}
+\usepackage{mathtools}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{url}
+\usepackage{color}
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+% macros
+\newcommand{\iid}{i.i.d.}
+
+
+\newcommand{\cost}{c}
+\newcommand{\pol}{\pi}
+\newcommand{\st}{\bm{x}}
+\newcommand{\cst}{\bm{p}} % costate
+\newcommand{\stdot}{\dot{\bm{x}}}
+\newcommand{\ac}{\bm{u}}
+\newcommand{\ob}{\bm{y}}
+\newcommand{\ad}{\bm{d}}
+\newcommand{\param}{\bm{\theta}} %vector of parameters 
+\newcommand{\hyp}{\bm{y}}
+
+\newcommand{\stdim}{n}
+\newcommand{\acdim}{m}
+\newcommand{\obdim}{l}
+\newcommand{\datdim}{d}
+
+
+\newcommand{\statespace}{\mathcal{X}}
+\newcommand{\actionspace}{\mathcal{U}}
+
+
+\newcommand{\f}{f}
+\newcommand{\h}{h} %used for measurement model
+\newcommand{\J}{J}
+
+
+\newcommand{\w}{\bm{\omega}} %process noise
+\newcommand{\wob}{\bm{\nu}} %measurement noise
+\newcommand{\W}{\Sigma_{\omega}} %measurement covar
+\newcommand{\V}{\Sigma_{\nu}} %measurement noise
+\newcommand{\I}{\bm{i}} %information vector
+
+
+\newcommand{\ham}{\mathcal{H}} %information vector
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\tr}{\text{tr}}
+\newcommand{\N}{\mathcal{N}}
+
+
+\newcommand\munderbar[1]{%
+  \underaccent{\bar}{#1}}
+
+\newcommand{\argmin}{\text{argmin}}
+\newcommand{\argmax}{\text{argmax}}
+
+\newcommand\jhtodo[1]{\textcolor{red}{[JH: #1]}} %James
+\newcommand{\jhmargin}[2]{{\color{red}#1}\marginpar{\color{red}\raggedright\footnotesize [JH]:#2}}
+
+\newcommand{\mtmargin}[2]{{\color{blue}#1}\marginpar{\color{blue}\raggedright\footnotesize [MT]:#2}} % matt's comments
