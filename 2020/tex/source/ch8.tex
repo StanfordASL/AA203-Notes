@@ -193,7 +193,7 @@ where we have ignored the normalizing constants. Looking at the exponentiated te
 where
 \begin{align}
     \Sigma_{\datdim} &= (\frac{1}{\sigma^2} X^T X + \Sigma_0^{-1})^{-1} \label{eq:blr_var}\\
-    \bm{\mu}_{\datdim} &= \Sigma_{\datdim}^{-1} (\frac{1}{\sigma^2} X^T y + \Sigma_0^{-1} \bm{\mu}_0) \label{eq:blr_mean}.
+    \bm{\mu}_{\datdim} &= \Sigma_{\datdim} (\frac{1}{\sigma^2} X^T y + \Sigma_0^{-1} \bm{\mu}_0) \label{eq:blr_mean}.
 \end{align}
 % double check this
 The above can be shown by completing the square for \eqref{eq:blr1}. We can now notice that this is an unnormalized Gaussian density for $\param$ with mean and variance given by \eqref{eq:blr_mean} and \eqref{eq:blr_var}, or
@@ -410,3 +410,5 @@ This increased depth allows representation of increasingly complex features.
 % stochastic gradient descent
 % regularization
 % VAE? LSTM? 
+
+\section{Bibliographic Notes}

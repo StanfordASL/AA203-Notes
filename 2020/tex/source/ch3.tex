@@ -2,11 +2,11 @@
 
 % need to make more pedagogical 
 
-In this section we will address an important subclass of continuous state and action space problems for which dynamic programming can be applied exactly. In this setting, we assume linear dynamics and quadratic costs, and the problem setting is referred to as the \textit{linear quadratic regulator} (LQR) problem. This LQR setting is important for several reasons. First, as a local stabilizing controller, it is a core tool that is often a first (effective) approach for a wide variety of problems. Setting, as we build up open-loop trajectory optimization methods later in the class, the LQR approach will often be used to provide local tracking of these trajectories. Finally, tracking LQR paired with a forward rollout step will form the basis of the first (and one of the most effective) nonlinear trajectory optimization methods that we will see in this class.
+In this section we will address an important subclass of continuous state and action space problems for which dynamic programming can be applied exactly. In this setting, we assume linear dynamics and quadratic costs, and the problem setting is referred to as the \textit{linear quadratic regulator} (LQR) problem. This LQR setting is important for several reasons. First, as a local stabilizing controller, it is a core tool that is often a first (effective) approach for a wide variety of problems. Second, as we build up open-loop trajectory optimization methods later in the class, the LQR approach will often be used to provide local tracking of these trajectories. Finally, tracking LQR paired with a forward rollout step will form the basis of the first (and one of the most effective) nonlinear trajectory optimization methods that we will see in this class.
 
-We will discuss the LQR setting in both continuous and discrete time. Additionally, we will further our discussion on the incomplete state estimation case in the linear quadratic setting, in which the dynamics and observation function are linear and the cost is quadratic. This results in the so-called \textit{linear quadratic Gaussian} (LQG) setting, which is an important example of the \textit{separation} principle, in which state observers and feedback controllers can be designed independently. As a consequence, the LQG approach forms the foundation of many algorithms in incomplete state information optimal control. 
+We will discuss the LQR setting in both discrete and continuous time. Additionally, we will further our discussion on the incomplete state estimation case in the linear quadratic setting, in which the dynamics and observation function are linear and the cost is quadratic. This results in the so-called \textit{linear quadratic Gaussian} (LQG) setting, which is an important example of the \textit{separation} principle, in which state observers and feedback controllers can be designed independently. As a consequence, the LQG approach forms the foundation of many algorithms in incomplete state information optimal control. 
 
-\section{Discrete Linear Quadratic Regulator}
+\section{The Linear Quadratic Regulator in Discrete Time}
 \label{sec:disrete_LQR}
 We will fix the dynamics of the system to be discrete time (possibly time-varying) linear, 
 \begin{equation}
@@ -69,9 +69,42 @@ Following the same procedure, we can write the DP recursion for the discrete-tim
 There are several implications of this recurrence relation. First, even if $A,B,Q,R$ are all constant (not time-varying), the policy is still time-varying. Why is this the case? Control effort invested early in the problem will yield dividends over the remaining length of the horizon, in terms of lower state cost for all future time steps. However, as the remaining length of the episode becomes shorter, this tradeoff is increasingly imbalanced, and the control effort will decrease. 
 However, for a linear time-invariant system, if $(A,B)$ is controllable, the feedback gain $L_k$ approach a constant as the episode length approaches infinity. This time-invariant policy is practical for long horizon control problems, and may be approximately computed by running the DP recurrence relation until approximate convergence. 
 
+\subsection{LQR with Additive Noise}
+
+We have so far considered LQR without disturbances. We will now extend the LQR controller to the setting in which additive Gaussian noise disturbs the system.
+The system dynamics are
+\begin{equation}
+    \st_{k+1} = A_k \st_k + B_k \ac_k + \w_{k}
+\end{equation}
+where $\w_{k} \sim \mathcal{N}(0, \W)$, and the stage-wise cost is 
+\begin{equation}
+    \cost_k(\st_k,\ac_k) = \frac{1}{2} ( \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k).
+\end{equation}
+with terminal cost $\frac{1}{2}\st_N^T Q_N \st_N$. We wish to minimize the expected cost. The cost-to-go, as in the deterministic case, will be quadratic. Thus, plugging into the Bellman equation, we have 
+\begin{align}
+\label{eq:LQR_rec_cost_stoch}
+    \J_{k}^*(\st_{k}) &=  \min_{\ac_{k} \in \R^m} \E {\Large[} 
+    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k}\\
+    &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} \nonumber\\
+    &= \min_{\ac_{k} \in \R^m} {\Large\{} 
+    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} \\
+    &+ \E {\Large[} \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} {\Large\}}. \nonumber
+\end{align}
+Following the same minimization procedure as for LQR, we see that the policy is identical to that in Section \ref{sec:disrete_LQR}. The Riccati equation, however, is
+\begin{align}
+    V_k &= Q_k + L_k^T R_k L_k + \E[(A_{k}+ B_{k} L_k + \w_{k})^T V_{k+1} (A_{k} + B_{k} L_k + \w_{k})] \label{eq:ric_lqr_stoch1}\\
+    &= Q_{k}  + L_{k}^T R_{k} L_{k} + (A_{k} + B_{k} L_{k})^T V_{k+1}   (A_{k} + B_{k} L_{k}) + \tr(\W V_{k+1}) \label{eq:ric_lqr_stoch2}
+\end{align}
+where $\tr(\cdot)$ denotes the trace. The equality between (\ref{eq:ric_lqr_stoch1}) and (\ref{eq:ric_lqr_stoch2}) holds as 
+\begin{equation}
+    \E[(A_{k} + B_{k} L_{k})^T V_{k+1} \w_{k}] = 0
+\end{equation} 
+for zero-mean $\w_{k}$, and $\E[\w_{k}^T V_{k+1} \w_{k}] = \tr(\W V_{k+1})$. Note that this is identical to the deterministic case, other than the additive trace term at the end. 
+
+
 \subsection{LQR with (Bi)linear Cost and Affine Dynamics}
 
-In the previous subsection, we have derived the common formulation of the LQR controller. In this subsection, we will derive the discrete time LQR controller for a more general system with bilinear/linear terms in the cost and affine terms in the dynamics. This derivation will be the basis of algorithms we will build up in the following subsections. More concretely, we consider systems with stage-wise cost
+The previous two subsections have presented the most common formulation of the LQR setting. In this subsection, we will derive the discrete time LQR controller for a more general system with bilinear/linear terms in the cost and affine terms in the dynamics. This derivation will be the basis of algorithms we will build up in the following subsections. More concretely, we consider systems with stage-wise cost
 \begin{equation}
     \cost(\st_k, \ac_k) = \frac{1}{2} \st_k^T Q_k \st_k + \frac{1}{2} \ac_k^T R_k \ac_k + \ac_k^T H_k \st_k +\bm{q}_k^T \st_k + \bm{r}^T_k \ac_k + q_k,
 \end{equation}
@@ -137,11 +170,15 @@ Given this notation, all necessary terms can be computed via the following relat
     \item $\ac^*_{k} =\bm{l}_k +  L_{k} \st_{k}$
     \item $J_k(\st_k) = \frac{1}{2}\st_k^T V_k \st_k + \bm{v}_k^T \st_k + v_k$.
 \end{enumerate}
-Note that in the following subsections (specifically in our discussion of differential dynamic programming) we will introduce more convenient (and compact) notation. 
+In the following subsections (specifically in our discussion of differential dynamic programming) we will introduce more convenient (and compact) notation. 
 
-\subsection{LQR Tracking around a Linear Trajectory}
+\subsection{Tracking LQR Tracking}
 
-In the previous subsections we have considered the generic linear quadratic control problem, in which we want to regulate to a fixed point, and deviations from this point are penalized. In this section, we will address the case in which we want to track a pre-specified trajectory. Let us assume (for now) that we have been given a nominal trajectory of the form $(\bar{\st}_0, \ldots, \bar{\st}_{N})$ and $(\bar{\ac}_0, \ldots, \bar{\ac}_{N-1})$. We will also assume that this trajectory satisfies our given dynamics, such that 
+We have so far considered the generic linear quadratic control problem, in which we want to regulate to the zero point, and deviations from this point are penalized. In this section, we will address the case in which we want to track a pre-specified trajectory. Let us assume (for now) that we have been given a nominal trajectory of the form $(\bar{\st}_0, \ldots, \bar{\st}_{N})$ and $(\bar{\ac}_0, \ldots, \bar{\ac}_{N-1})$. 
+
+\subsubsection{LQR Tracking with a Linear trajectory}
+
+We will first assume that the provided trajectory satisfies our given dynamics, such that 
 \begin{equation}
 \bar{\st}_{k+1} = A_k \bar{\st}_k + B_k \bar{\ac}_k + \bm{d}_k,\,\, \forall k = 0, \ldots, N-1.    
 \end{equation}
@@ -158,9 +195,9 @@ Thus, tracking the nominal trajectory reduces to driving the state deviation, $\
 
 % should expand discussion -- possibly write out the modified cost function?
 
-\subsection{LQR Tracking around a Nonlinear Trajectory}
+\subsubsection{LQR Tracking around a Nonlinear Trajectory}
 
-Despite LQR being an extremely powerful approach to optimal control, it suffers from a handful of limitations. First and foremost, it assumes the dynamics are (possibly time-varying) linear, and the cost function is quadratic. While most systems are in fact nonlinear, a typical approach to designing feedback controllers is to linearize around some operating point. This is an effective method for designing regulators, which aim to control the system to some particular state. If, in contrast, we wish to track a trajectory, we must instead linearize around this trajectory. We will assume we are given a nominal trajectory which satisfies the nonlinear dynamics, such that
+Despite LQR being a powerful approach to optimal control, it suffers from a handful of limitations. First and foremost, it assumes the dynamics are (possibly time-varying) linear, and the cost function is quadratic. While most systems are in fact nonlinear, a typical approach to designing feedback controllers is to linearize around some operating point. This is an effective method for designing regulators, which aim to control the system to some particular state. If, in contrast, we wish to track a trajectory, we must instead linearize around this trajectory. We will assume we are given a nominal trajectory which satisfies the nonlinear dynamics, such that
 \begin{equation}
     \bar{\st}_{k+1} = \f(\bar{\st}_k,\bar{\ac}_k),\,\, \forall k = 0, \ldots, N-1. 
 \end{equation}
@@ -329,88 +366,11 @@ Both iLQR and DDP are local methods. Full dynamic programming approaches yield g
 % add more discussion on this
 % Constrained differential dynamic programming and its application to multireservoir control
 
-\section{Stochastic LQR and LQG}
-
-\subsection{LQR with Additive Noise}
-
-We will first address the stochastic LQR problem. The system dynamics are
-\begin{equation}
-    \st_{k+1} = A_k \st_k + B_k \ac_k + \w_{k}
-\end{equation}
-where $\w_{k} \sim \mathcal{N}(0, \W)$, and the stage-wise cost is 
-\begin{equation}
-    \cost_k(\st_k,\ac_k) = \frac{1}{2} ( \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k).
-\end{equation}
-with terminal cost $\frac{1}{2}\st_N^T Q_N \st_N$. We wish to minimize the expected cost. The cost-to-go, as in the deterministic case, will be quadratic. Thus, plugging into the Bellman equation, we have 
-\begin{align}
-\label{eq:LQR_rec_cost_stoch}
-    \J_{k}^*(\st_{k}) &=  \min_{\ac_{k} \in \R^m} \E {\Large[} 
-    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k}\\
-    &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} \nonumber\\
-    &= \min_{\ac_{k} \in \R^m} {\Large\{} 
-    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} \\
-    &+ \E {\Large[} \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} {\Large\}}. \nonumber
-\end{align}
-Following the same minimization procedure as for LQR, we see that the policy is identical to that in Section \ref{sec:disrete_LQR}. The Riccati equation, however, is
-\begin{align}
-    V_k &= Q_k + L_k^T R_k L_k + \E[(A_{k}+ B_{k} L_k + \w_{k})^T V_{k+1} (A_{k} + B_{k} L_k + \w_{k})] \label{eq:ric_lqr_stoch1}\\
-    &= Q_{k}  + L_{k}^T R_{k} L_{k} + (A_{k} + B_{k} L_{k})^T V_{k+1}   (A_{k} + B_{k} L_{k}) + \tr(\W V_{k+1}) \label{eq:ric_lqr_stoch2}
-\end{align}
-where $\tr(\cdot)$ denotes the trace. The equality between (\ref{eq:ric_lqr_stoch1}) and (\ref{eq:ric_lqr_stoch2}) holds as 
-\begin{equation}
-    \E[(A_{k} + B_{k} L_{k})^T V_{k+1} \w_{k}] = 0
-\end{equation} 
-for zero-mean $\w_{k}$, and $\E[\w_{k}^T V_{k+1} \w_{k}] = \tr(\W V_{k+1})$. Note that this is identical to the deterministic case, other than the additive trace term at the end. 
-
-\subsection{Problems with Imperfect State Information}
-
-We now consider the case in which direct, perfect state information isn't available. Instead, we have a noise-corrupted measurements
-\begin{align}
-    \ob_0 &= \h_0(\st_0, \wob_{0})\\
-    \ob_{k} &= \h(\st_k, \wob_{k}), \,\, k=0,\ldots,N-1.
-\end{align}
-The observation disturbance is characterized by distribution 
-\begin{equation}
-    p(\cdot\mid \st_k,\ldots,\st_0,\ac_{k-1},\ldots,\ac_0,\w_{k-1},\ldots,\w_{0},\wob_{k-1},\ldots,\wob_{0})
-\end{equation}
-and the initial state $\st_0$ is distributed according to $p(\st_0)$. We will define the information vector as
-\begin{equation}
-    \I_k = [\ob_0^T, \ldots, \ob_k^T, \ac_0^T, \ldots, \ac_{k-1}^T]^T.
-\end{equation}
-Armed with this, we will consider \textit{admissible} policies $\pi(\I_k) \in \mathcal{U}_k$, which implies they are \textit{causal} --- they do not rely on information only available in the future. The goal of the control problem, then is to minimize 
-\begin{equation}
-    \E_{\st_{0},\w_{0:N-1},\wob_{0:N-1}} \left[ \cost_T(\st_N) + \sum_{k=0}^{N-1} \cost(\st_k, \pol(\I_k),\w_{k}) \right].
-\end{equation}
-Treating this problem as a perfect state information problem and attempting to solve directly results in several problems. In addition to the standard difficulties associated with applying DP to generic problems, $\I_k$ has expanding dimension over the length of the problem. Alternatively, we may reason in terms of sufficient statistics: quantities that summarize all of the informational content of $\I_k$. For example, if we can construct a conditional distribution over state, $p(\st_k\mid\I_k)$, we can design a policy of the form $\pol_k(p(\st_k\mid\I_k))$.
-
-\subsection{LQG and the Separation Principle}
-
-Given the generic imperfect state information control problem, we will address an extremely important special case. We will again consider quadratic cost of the form
-\begin{equation}
-    \frac{1}{2} \E\left[ \st_N^T Q_N \st_N + \sum_{k=0}^{N-1} \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k \right]
-\end{equation}
-subject to dynamics
-\begin{equation}
-    \st_{k+1} = A_k \st_k + B_k \ac_k + \w_{k}
-\end{equation}
-and measurements
-\begin{equation}
-    \ob_k = C_k \st_k + \wob_k.
-\end{equation}
-The initial state $\st_0$, and process and measurements noise $\w_{0:N-1},\wob_{0:N-1}$ independent, zero-mean Gaussians. We will write the covariance of $\w_k$ and $\wob_k$ as $\Sigma_{\w,k}$ and $\Sigma_{\wob,k}$, respectively. We will write $\Sigma_{\st,0}$ for the covariance of $\st_0$.
-
-We will skip the lengthy derivation, but the optimal control policy takes the form
-\begin{equation}
-    \ac_k^* = L_k \hat{\st}_k
-\end{equation}
-where $\hat{\st}_k$ is the state estimate from the Kalman filter, and $L_k$ is the standard gain from LQR. Note that the Kalman filter maintains a Gaussian estimate of the state, and so the sufficient statistics are the mean and variance. However, the policy depends only on the mean. The policy can be designed as if access to perfect state information is available, while the estimator can be designed without considering the controller. This is known as the \textit{separation principle}.
-
-% Should add much more on this.
-
-
 \section{Continuous-Time LQR}
 
-As a useful result of the HJB equations, we will derive LQR in continuous time. We aim to minimize 
+We have so far considered LQR in discrete time. We will now derive the continuous time version of the LQR controller from the HJB equations. Our discussion of the continuous time formulation will be limited compared to discrete time, but the same principles and methods hold in general for both settings. As such, we primarily focus on the discrete time LQR formulation and provide a discussion of the continuous time formulation for completeness. 
+
+We aim to minimize 
 \begin{equation}
     \J(\st(0)) = \frac{1}{2} \st^T(t_f) Q_f \st(t_f) + \frac{1}{2} \int_0^{t_f} \st^T(t) Q(t) \st(t) + \ac^T(t) R(t) \ac(t) dt
 \end{equation}
@@ -476,8 +436,89 @@ Therefore, the HJB PDE has been reduced to a set of matrix ordinary differential
 \end{equation}
 Similarly to the discrete case, the feedback gains tend toward constant in the limit of the infinite horizon problem, under some technical assumptions.
 
-\section{Further Reading}
+\section{Linear Quadratic Optimal Control with Imperfect State Information}
+
+Our discussion in this chapter has so far entirely operated under the assumption of \textit{perfect state information}, in which we directly observe the state of a Markovian dynamical system. For many systems, this is an implausible assumption: most measurements will have some amount of noise. In the remainder of this chapter we will discuss the linear quadratic optimal control problem with \textit{imperfect state information}. In general, imperfect state information problems do not yield simple Markovian policies. However, in the linear quadratic setting, with Gaussian process and measurement noise---the so-called LQG problem---we are able to exactly design an optimal policy. In particular, the LQG setting obeys the \textit{separation principle}, in which a state observer and feedback controller can be designed independently, which in general is not true. As a consequence, the LQG setting provides the basis of much of the more advanced work in optimal control under uncertainty. We will discuss the LQG setting in discrete time, before presenting the linear quadratic estimators (equivalently, the Kalman filter) for both continuous and discrete time, for completeness. 
+
+\subsection{LQG and the Separation Principle}
+
+We will again consider quadratic cost of the form
+\begin{equation}
+    \frac{1}{2} \E\left[ \st_N^T Q_N \st_N + \sum_{k=0}^{N-1} \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k \right]
+\end{equation}
+subject to dynamics
+\begin{equation}
+    \st_{k+1} = A_k \st_k + B_k \ac_k + \w_{k}.
+\end{equation}
+We will additionally assume measurements
+\begin{equation}
+    \ob_k = C_k \st_k + \wob_k
+\end{equation}
+and assume that we may not directly observe $\st$. The initial state $\st_0$, and process and measurements noise $\w_{0:N-1},\wob_{0:N-1}$ are independent, zero-mean Gaussians. We will write the covariance of $\w_k$ and $\wob_k$ as $\Sigma_{\w,k}$ and $\Sigma_{\wob,k}$, respectively. We will write $\Sigma_{\st,0}$ for the covariance of $\st_0$.
+
+Recall the dynamic programming equation for incomplete state information, 
+\begin{equation}
+    \J_k(\st_k) = \min_{\ac_k \in \mathcal{U}(\st_k)} \E_{w_k, \st_k} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\f(\st_k,\ac_k,\w_k)) \mid \bm{i}_k \right].
+\end{equation}
+Plugging in for terms (and assuming for now a quadratic cost to go), we have
+\begin{align}
+    \J_k(\st_k) &= \frac{1}{2} \min_{\ac_k \in \mathcal{U}(\st_k)} \E_{\w_k, \st_k} \large[ \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k + \\
+    &\qquad (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \mid \bm{i}_k \large]\nonumber\\
+    &= \frac{1}{2} \E_{\st_k} \large[ \st_k^T (Q_k + A_k^T V_{k+1} A_k) \st_k \mid \bm{i}_k \large] + \\
+    & \qquad \frac{1}{2} \E_{\w_k} \large[ \w_k^T Q_k \w_k] + \nonumber\\
+    & \qquad \frac{1}{2} \min_{\ac_k \in \mathcal{U}(\st_k)} \left\{ \ac_k^T (B_k^T V_{k+1} B_k + R_k) \ac_k + 2 \E[\st_k \mid \bm{i}_k]^T A_k^T V_{k+1} B_k \ac_k \right\}.\nonumber
+\end{align}
+There are several things to notice about this equation. First, the last minimization term exactly matches the minimization that resulted in the LQR feedback policy, just defined in terms of the conditional expectation of the state given all information. We will skip the rest of the proof due to space constraints, but the takeaway from the above is that the policy ends up being a linear feedback law on the expected state. Moreover, this linear policy results in the dynamic programming equation yielding a Riccati recursion. Finally, ignoring some technical details and skipping a more gentle introduction to estimation, the optimal conditional expectation for the state in the linear quadratic setting is provided by the Kalman filter (or the linear quadratic estimator, as it is also known).
+
+So, to summarize, the optimal control policy takes the form
+\begin{equation}
+    \pol^*(\bm{i}_k) = L_k \hat{\st}_k
+\end{equation}
+where $\hat{\st}_k$ is the state estimate from the Kalman filter, and $L_k$ is the standard gain from LQR. Note that the Kalman filter maintains a Gaussian estimate of the state, and so the sufficient statistics are the mean and variance. However, the policy depends only on the mean. The policy can be designed as if access to perfect state information is available, while the estimator can be designed without considering the controller. This is known as the \textit{separation principle}, and holds for both continuous and discrete time. For a more complete proof of the preceding discussion, we refer the reader to \cite{bertsekas1995dynamic}. For completeness, we provide the update equations for the LQE below.
+
+% TODO: add full proof of separation principle
+
+\subsection{Linear Quadratic Estimation}
+
+% TODO: add gentle intro to kalman filter
+
+For completeness, we will now provide the Kalman filter update equations for both discrete and continuous time. We will not provide a derivation of these update rules, but they are available in many books on estimation.
+
+\subsubsection{Discrete Time}
+
+The discrete time updates for the Kalman filter take the form
+\begin{align}
+    \Sigma_{k+1|k} &= A^T_k \Sigma_{k|k} A_k + \Sigma_{\w,k} \\ 
+    \Sigma_{k+1|k+1} &= \Sigma_{k+1|k} - \Sigma_{k+1|k} C^T_{k+1} (C_{k+1} \Sigma_{k+1|k} C^T_{k+1} + \Sigma^{-1}_{\wob,k+1})^{-1} C_{k+1} \Sigma_{k+1|k} \\
+    \hat{\st}_{k+1} &= A_k \hat{\st}_k + B_k \ac_k + \Sigma_{k+1|k+1} C^T_{k+1} \Sigma^{-1}_{\wob,k+1} (\ob_{k+1} - C_{k+1} (A_k \hat{\st}_k + B_k \ac_k))
+\end{align}
+with initializations
+\begin{align}
+    \Sigma_{0|0} &= \Sigma_{\st,0} -  \Sigma_{\st,0} C^T_0 ( C_0 \Sigma_{\st,0} C^T_0 + \Sigma_{\wob,0})^{-1} C_0  \Sigma_{\st,0}\\
+    \hat{\st}_0 &= \E[\st_0] + \Sigma_{0|0} C_0^T \Sigma_{\wob, 0}^{-1} (\ob_0 - C_0 \E[\st_0]).
+\end{align}
+
+\subsubsection{Continuous Time}
+
+We consider dynamics of the form
+\begin{align}
+    \dot{\st}(t) &= A(t) \st(t) + B(t) \ac(t) + \w(t)\\
+    \ob(t) &= C(t) \st(t) + \wob(t)
+\end{align}
+where $\w(t) \sim \N(0, \Sigma_{\w}(t))$. $\wob(t) \sim \N(0, \Sigma_{\wob}(t))$, and the initial state $\st(0) \sim \N(\bar{\st}_0, \Sigma_0)$ The continuous time Kalman filter takes the form
+\begin{align}
+\dot{\Sigma}(t) &=  A(t) \Sigma(t) + \Sigma(t) A^T(t) + \Sigma_{\w}(t) - \Sigma(t) C^T(t) \Sigma_{\wob}^{-1}(t) C(t) \Sigma(t)\\
+    \dot{\hat{\st}}(t) &= A(t) \hat{\st}(t) + B(t) \ac(t) + \Sigma(t) C^T(t) \Sigma_{\wob}^{-1}(t) (\ob(t) - C(t) \hat{\st}(t))
+\end{align}
+with initialisations
+\begin{align}
+    \Sigma(0) &= \Sigma_0\\
+    \hat{\st}(0) &= \bar{\st}_0.
+\end{align}
+
+\section{Bibliographic Notes}
 
 A comprehensive coverage of linear quadratic methods for optimal control is Anderson and Moore \cite{anderson2007optimal}. LQG is covered in discrete time in \cite{bertsekas1995dynamic}. The original, comprehensive reference on DDP is \cite{mayne1970ddp}, but a large body of literature on the method has been produced since then. The original papers on iLQR are \cite{todorov2005generalized,li2004iterative}.
 
 % need to add more discussion 
+

@@ -3,13 +3,55 @@
 
 \section{Learning in Optimal Control}
 
+% State the adaptive optimal control problem. Lead into information gain. Talk about comparison to passive adaptive control? Talk about MRAC adaptive control? 
+
+% lay out episodic vs non-episodic setting (+ goals of each)
+
+
+% We will consider the finite-time, stochastic, discrete-time adaptive optimal control problem with full state measurement. Thus, we consider the problem
+% \begin{equation}
+% \begin{aligned}
+% \label{eq:ocp}
+% & \underset{\ac_{0:N-1}}{\min} & & \E_{\w_{0:N-1}} \left[ \sum_{k=0}^{N-1} \cost(\st_k,\ac_k) \right]\\
+% & \textrm{s.t.} & & \st_{k+1} = \f(\st_k, \ac_k, \w_k; \param),\,\, t = 0, \ldots, N-1\\
+% % & & & \st(0) = \st_0\\
+% % & & & \st(t_f) \in \mathcal{M}_f\\
+% % & & & \ac(t) \in \mathcal{U}, t\in [0,t_f]
+% \end{aligned}
+% \end{equation}
+% where we have dropped the time-dependence of the cost and dynamics, as well as a terminal cost, for simplicity. We have also dropped the control and state constraints. The term $\w_k$ is a stochastic disturbance. Here, $\param$ is a vector of unknown parameters that govern state evolution. For example, one may be unsure of the inertial characteristics of a robotic arm, or the drag coefficient of an aircraft. One difference in the literature is between whether or not a prior distribution is placed on $\param$, and we will discuss both cases. 
+
+% Note that we have defined the adaptive optimal control problem of minimizing expected control cost over \textit{one episode}, which is to say you only interact with the system a single time, for $N$ timesteps, during which $\param$ is fixed. This contrasts with the usual reinforcement learning setting, which we will discuss in the next chapter, for which an agent interacts with the system for multiple episodes (for which $\param$ is fixed for all episodes). Note, however, that this is not a universal definition of reinforcement learning, and is simply a definition we choose to impose to clarify the two settings we discuss. Thus, a fundamental distinction between adaptive optimal control and reinforcement learning is that adaptive optimal control must perform adaptation online, whereas reinforcement learning may follow a policy, without online adaptation, for an entire episode. 
+
+% In this chapter we will discuss several approaches to this problem, both heuristic and representing optimal or near-optimal solutions. The heuristic approaches are practical alternatives to the optimal/near-optimal approaches, which were largely discarded due to mathematical complexity or practical difficulties. We will discuss recent work on these methods, and the current research state-of-the-art. 
+
 
 \subsection{What Should we Learn?}
 
+% From the previous topics addressed in this course, the question of what we should learn may seem surprising. Surely, we should identify the unknown parameters, and then perform optimal control? While that will be the bulk of the discussion in the next two sections, it is not the only possible approach. Within both the adaptive control literature and the reinforcement learning literature, large bodies of work (perhaps even the majority of each topics' literature) is focused on direct adaptation of the control policy, and does not attempt to identify the unknown parameters. An example of this in adaptive control is adaptive pole placement. Direct adaptation of a control policy is typically referred to as direct adaptive control in the control literature, and as model-free reinforcement learning in the RL literature. Adaptive control via model identification is typically referred to as indirect adaptive control or model-based RL. 
+
+% What else could we learn? The value function is one quantity appearing regularly in the previous chapters. However, access to the value function is not actionable without model knowledge; we wish to choose some $\ac$ to minimize 
+% \begin{equation}
+% Q(\st,\ac) = \E\left[ \cost(\st,\ac) + \J(\st') \right]
+% \end{equation}
+% which we refer to as the $Q$ function or the state-action value function. Thus, without access to knowledge of the probability of $\st'$ given $(\st,\ac)$, we can not optimize $Q$. An alternative approach that is common in reinforcement learning is to directly learn the $Q$ function. In discrete control settings (for which there are a finite number of actions), this is reasonable and often quite efficient. Because we must maximize over $Q$, we can simply evaluate each possible action. For a continuous action space, we must either attempt to solve the non-convex optimization problem $\max_{\ac} Q(\st,\ac)$, or we must discretize our action space (and thus exposing ourselves to the curse of dimensionality). There are a handful of special cases in which the action space is continuous but the maximization can be solved efficiently, which we will discuss in the next chapter. 
+
+% % avoid learning, do robust control
+% Finally, a question that a control system designer should ask themselves is whether a learning-based or adaptive control scheme is necessary. First, standard feedback control is often sufficient to compensate for small model errors. Moreover, if outer bounds on the unknown parameter are available and achieving near-optimal system performance is not necessary, one may wish to use a robust control strategy as opposed to an adaptive one. Verification of robust control strategies has been a key line of work in control theory in the previous three decades, and many practical approaches exist (primarily for linear systems). We refer the reader to \cite{zhou1996robust} for a treatment of robust control theory (viewed through the lens of optimal control). 
+
+
+% We will begin by discussing the broad learning control/adaptive optimal control problem (and briefly mention the approaches that will be discussed in the following chapter). While there are many ways to state this problem (discrete-time versus continuous, with or without full state information, etc.), we will fix the following control setting for the bulk of the following two chapters. 
+
+
 \subsection{Episodes and Data Collection}
+
+% Outline the reinforcement learning problem setting 
+
+% use temporally stationary value function
 
 
 % One or multiple episodes
 
 % System identification versus adaptive control versus reinforcement learning
 
+\section{Bibliographic Notes}

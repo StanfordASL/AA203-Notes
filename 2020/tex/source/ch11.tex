@@ -1,21 +1,189 @@
 \chapter{Model-free Reinforcement Learning}
 
+In this section we will discuss \textit{model-free} reinforcement learning, in which an agent aims to improve its behavior via interaction with an environment, without explicitly trying to predict state transitions (i.e. dynamics) or rewards. 
+By learning a policy directly (possibly along with a value function), the agent can learn to choose good actions without explicitly leveraging model-based control. 
+
+
+There are several reasons why this model-free approach may be preferable to learning the dynamics of the system. First, the optimal policy may be considerably simpler than the dynamics of the system. An example of this is inventory management, a classic problem in operations research. In this setting, the optimal policy is simply to restock whenever the inventory level is below some threshold, a trivial decision rule. 
+% TODO add in inventory example
+
+A second reason is that learning a dynamics model may result in suboptimality of the resulting policy. In dynamics learning, we typically choose a surrogate objective function to optimize the model, such as $L_2$ error. In model-free reinforcement learning, on the other hand, we directly optimize a policy to minimize the expected total cost. Introducing the intermediate objective may induce suboptimality in the policy optimization process. 
+
+We will discuss the two major classes of model-free reinforcement learning algorithms: those based on \textit{temporal difference learning}, such as Q-learning, and those based on \textit{policy gradient} optimization. We will then discuss the intersection of these methods, typically referred to as \textit{actor-critic} methods because they combine an actor (policy, which selects actions) and a critic (value function, which predicts the total cost associated with actions). 
+
+Our discussion in this section will not be comprehensive, and indeed, the modern reinforcement learning literature is growing rapidly. This section is meant to provide an overview of the most common approaches in current use. 
+
 \section{Temporal Difference Learning}
 
-% The idea of TD learning, Q learning, DQN. 
-\subsection{Q-Learning}
+A key concept in reinforcement learning is the idea of \textit{temporal difference} (TD) learning. TD learning combines ideas from statistical inference---in particular, parameter inference with noisy measurements---with dynamic programming. 
+
+Temporal difference learning focuses on learning some flavor of the value function, such as the standard state value function (also referred to as the cost-to-go in these notes), or the state-action value function (also referred to as the Q function). Note, however, that this quantity is not directly observable---the value function can not be measured directly. Thus TD learning turns to the concept of \textit{bootstrapping}, in which the learned value of future states is used to provide a noisy measurement of the current value. In addition to enabling efficient learning of the value function, TD methods also enable \textit{online} control, in which a policy can be immediately updated after observing one transition, as opposed to observing a full episode. 
+
+We will discuss two algorithms: SARSA, which is on-policy, and Q-learning, which is off-policy. We will discuss both of these algorithms in the \textit{tabular} setting. In this setting, we assume our representation of the $Q$ function will take the form of a look up table of each state and action pair. Thus, we necessarily assume a discrete state and action space. We will then discuss combining TD learning with function approximation. This discussion will focus on Q-learning, as the on-policy nature of SARSA has so far been difficult to combine with hyperparametric function approximators such as neural networks. As in our discussion of optimal control in discrete state spaces, we will avoid discussion of the policy evaluation setting, and focus solely on policy improvement (or the control setting). For a thorough discussion of policy evaluation, we refer the reader to \cite{sutton2018reinforcement}.
 
 \subsection{SARSA}
 
-\subsection{Q-Learning with Function Approximation}
+As a first model-free TD learning algorithm, we will consider SARSA. SARSA stands for \textbf{s}tate, \textbf{a}ction, \textbf{r}eward, \textbf{s}tate, \textbf{a}ction, where the last state action pair denote the post-transition state and the action associated with this state. The emphasis on this second action provides a contrast to Q-learning, as we will see later. 
 
-% DQN, Double Q learning, TD3, Bayesian methods?
+SARSA proceeds as in Algorithm \ref{alg:SARSA}. The agent iteratively interacts with the environment, choosing an action to minimize the learned $Q$ function. This $Q$ function is updated as 
+\begin{equation}
+    Q(\st_t,\ac_t) \gets Q(\st_t,\ac_t) + \alpha (\cost_t + \gamma Q(\st_{t+1},\ac_{t+1}) - Q(\st_t,\ac_t))
+\end{equation}
+for $alpha \in (0,1]$. Note that for our discussion of model-free RL, we will use a temporally stationary value function. There are two phases to the SARSA algorithm. One consists of selecting actions to optimize $Q$. For the optimal state-action value function $Q^*$, this yields the optimal policy. 
+
+The second step consists of updating the learned $Q$ function to reduce the \textit{temporal difference error},
+\begin{equation}
+\cost_t + \gamma Q(\st_{t+1},\ac_{t+1}) - Q(\st_t,\ac_t).
+\end{equation}
+Note that acting according to the policy for which the $Q$ function is defined, this TD error will be zero in expectation. Thus, at convergence, the policy is optimal for $Q^*$, and the $Q$ function has zero expected error (and is thus at a fixed point) for the associated policy; these two facts together give intuition as to why this approach converges to an optimal policy in the tabular setting. A proof of convergence relies on technical details regarding exploration, which we exclude discussion of for now. 
+
+% TODO add proof of convergence
+% can write update as convex combination of previous and Bellman value
+
+% TODO add discussion of step size and stochastic approximation
+
+SARSA is an \textit{on-policy} reinforcement learning algorithm, which means that it must interleave action selection (and thus interacting with the environment) and learning. This is due to the interaction between the greedy (with respect to the $Q$ function) action selection and using the post-transition action ($\ac_{t+1}$) for computing the update to the $Q$ function. Updating the $Q$ function solely with respect to actions from a provided dataset, without controlling the action selection, would learn the policy used in the dataset generation and the associated $Q$ function (a setting referred to as \textit{policy evaluation}). This is in contrast to $Q$-learning (which we will discuss next) which is \textit{off-policy}, and thus able to learn an optimal policy without action selection. 
+
+\subsubsection{$\epsilon$-greedy Exploration}
+
+Reinforcement learning algorithms must focus on \textit{exploration}, as well as \textit{exploitation}. In particular, if greedy action selection is performed, it is possible that some state-action pairs will not be explored, and so the reward from these states is not observed, and thus convergence is not achieved. As opposed to our discussion in the previous section on dual control, we may not assume knowledge of the reward function, or priors on parameters. As a consequence, we must turn to heuristics for efficient exploration. While we will expand on exploration later in this chapter, we will discuss a simple form of exploration typically paired with tabular learning algorithms, \textit{$\epsilon$-greedy} action selection. 
+
+An $\epsilon$-greedy policy assumes some pre-specified $\epsilon \in (0,1)$, and takes the form
+\begin{align}
+    \pol_{\epsilon}(\st; Q) = \begin{cases}
+    \ac_\epsilon \,\, &\text{with probability}\,\, \epsilon\\
+    \argmin_{\ac \in \actionspace} \, Q(\st,\ac)\,\, &\text{otherwise}
+    \end{cases}
+\end{align}
+where $\ac_{\epsilon}$ denotes an action sampled uniformly from the action space. Put simply, this policy chooses the optimal action with probability $1-\epsilon$, and otherwise chooses a random action. 
+
+\begin{algorithm}[t]
+\caption{SARSA}
+\centering
+\label{alg:SARSA}
+
+%\begin{minipage}[t]{0.5\textwidth}
+\begin{algorithmic}[1]
+    \Require Step size $\alpha \in (0,1]$, action selection rule $\pol(\cdot; \cdot)$
+    \State Initialize $Q(\st,\ac)$ for all $\st \in \statespace, \ac \in \actionspace$
+    \For{each episode, $n = 0, \ldots, N$}
+        \State Initialize state $\st_1$
+        \State $\ac_t \gets \pol(\st_t; Q)$
+        \For{$t = 1, \ldots, T$}
+            \State Observe next state $\st_{t+1}$, cost $\cost_{t}$
+            \State $\ac_{t+1} \gets \pol(\st_{t+1}; Q)$
+            \State $Q(\st_t,\ac_t) \gets Q(\st_t,\ac_t) + \alpha (\cost_t + \gamma Q(\st_{t+1},\ac_{t+1}) - Q(\st_t,\ac_t))$
+        \EndFor
+    \EndFor
+\end{algorithmic}
+%\end{minipage}
+\end{algorithm}
+
+
+\subsection{$Q$-Learning}
+
+\begin{algorithm}[t]
+\caption{$Q$-learning}
+\centering
+\label{alg:Q}
+
+%\begin{minipage}[t]{0.5\textwidth}
+\begin{algorithmic}[1]
+    \Require Step size $\alpha \in (0,1]$, action selection rule $\pol(\cdot; \cdot)$
+    \State Initialize $Q(\st,\ac)$ for all $\st \in \statespace, \ac \in \actionspace$
+    \For{each episode, $n = 0, \ldots, N$}
+        \State Initialize state $\st_1$
+        \For{$t = 1, \ldots, T$}
+            \State $\ac_t \gets \pol(\st_t; Q)$
+            \State Observe next state $\st_{t+1}$, cost $\cost_{t}$
+            \State $Q(\st_t,\ac_t) \gets Q(\st_t,\ac_t) + \alpha (\cost_t + \gamma \min_{\ac' \in \actionspace} Q(\st_{t+1},\ac') - Q(\st_t,\ac_t))$
+        \EndFor
+    \EndFor
+\end{algorithmic}
+%\end{minipage}
+\end{algorithm}
+
+$Q$-learning, named for the state-action value function and detailed in Algorithm \ref{alg:Q}, relies on replacing the on-policy update of $SARSA$ with 
+\begin{equation}
+    Q(\st_t,\ac_t) \gets Q(\st_t,\ac_t) + \alpha (\cost_t + \gamma \min_{\ac' \in \actionspace} Q(\st_{t+1},\ac') - Q(\st_t,\ac_t)).
+\end{equation}
+SARSA aimed to perform a greedy action selection step, coupled with a $Q$ function update step that estimated the $Q$ function associated with this greedy action selection (policy evaluation). Recall that
+\begin{equation}
+    Q^*(\st,\ac) = \cost(\st,\ac) + \E_{\st'}[\J^*(\st')]
+\end{equation}
+and
+\begin{equation}
+    \J^*(\st) = \min_{\ac \in \actionspace} Q^*(\st,\ac).
+\end{equation}
+In contrast to SARSA, $Q$-learning replaces the policy evaluation step with one in which the $Q^*$ is inferred, based on the minimization in the TD error. Interestingly, this results in an off-policy algorithm---for any choice of data-gathering policy, the optimal $Q$ function can be learned (in the tabular case, with sufficient exploration). 
+
+\subsection{$Q$-Learning with Function Approximation}
+
+Up until now, we have considered tabular representations of either policies or $Q$ functions (inducing a tabular policy via maximization over discrete action spaces). For large MDPs, this tabular representation is impractical. For large, discrete MDPs, visiting every state-action pair may be impossible, and we may wish to achieve some notion of \textit{generalization}, in which close states (in some metric) have similar value functions or policies. Moreover, as we move to continuous state spaces, we have two options to represent our $Q$ function. We may either discretize the continuous state space to get a discrete MDP, leaving us susceptible to the curse of dimensionality\footnote{The \textit{curse of dimensionality} is used to describe the exponential growth of the discrete MDP state space as the continuous state space dimension increases.}. Alternatively, we may turn to a parametric representation of our $Q$ function, and optimize these parameters to reduce TD error. As we will see in this section, while these approximation approaches are effective for achieving scalability of $Q$-learning methods, they have poor convergence properties and can be quite unstable in practice. We will focus in this section on combining off-policy methods with function approximation, which have recently been more popular. For a discussion of combining on-policy methods with function approximation, as well as value function approximation, we refer the reader to \cite{sutton2018reinforcement}.
+
+\subsubsection{$Q$-learning with Linear Function Approximation}
+
+Before discussing \textit{nonlinear} approximations such as neural networks, we will discuss combining $Q$-learning with \textit{linear} function approximation. In particular, we will consider functions of the form
+\begin{equation}
+    Q_{\param}(\st,\ac) = \param^T \feat(\st,\ac)
+\end{equation}
+where $\feat(\cdot, \cdot)$ is a set of features (or basis functions). Thus, we will replace the tabular update of $Q$-learning with an update rule for the weights, $\param$. We fix as a loss function the squared TD error, defined for a state, action, cost, state tuple $(\st,. \ac, \cost, \st')$ as 
+\begin{equation}
+    \ell(\param) = \E_{\st,\ac,\st'\sim \rho}\left[ \left(\cost + \gamma \min_{\ac' \in \actionspace} Q_{\param}(\st',\ac') - Q_{\param}(\st,\ac)\right)^2\right]
+\end{equation}
+which has several convenient properties. Here, $\rho$ is the distribution over states and actions induced by the dynamics of the environment and the policy. Thus, online transitions acting with respect to the current policy (induced by the $Q$ function) will obey this distribution. In general, off-policy learning will not exactly obey this distribution. We will discuss this in the next subsection. For further discussion, we refer the reader to \cite{sutton2018reinforcement}. The gradient of the squared TD error takes the form
+\begin{align}
+    \nabla_{\param} \ell(\param) &= - \E_{\st,\ac,\st'\sim \rho}\left[  (\cost + \gamma \min_{\ac' \in \actionspace} Q_{\param}(\st',\ac') - Q_{\param}(\st,\ac)) \nabla_{\param} Q_{\param}(\st,\ac) \right]\\
+    &= - \E_{\st,\ac,\st'\sim \rho}\left[  (\cost + \gamma \min_{\ac' \in \actionspace} Q_{\param}(\st',\ac') - Q_{\param}(\st,\ac)) \feat(\st,\ac)\right]
+\end{align}
+where the gradient contribution of the post-transition value is ignored. We will discuss this is more detail when we discuss double $Q$-learning. Note that a Monte Carlo approximation of the expectation over state-action \textit{occupancy}, $\rho$, is provided by online updating as in standard $Q$-learning. This gradient update for a single transition tuple allows us to define approximate version of $Q$-learning and SARSA (if the $\ac'$ taken is used instead of maximizing over the action function). Two approaches are possible: one can update the weights in an online fashion (which we will not discuss here due to this approach being relatively unpopular) or in a batch fashion, averaging the gradient over many transitions, which we will discuss in the next subsection. 
+
+% TODO clarify semi-gradient and missing term
+
+A standard gradient descent update (ignoring the expectation) with step size $\alpha$ for $\param$ takes the form
+\begin{equation}
+    \param' \gets \param + \alpha (\cost + \gamma \min_{\ac' \in \actionspace} Q_{\param}(\st',\ac') - Q_{\param}(\st,\ac)) \feat(\st,\ac).
+\end{equation}
+As a special case, consider a discrete state/action space and features corresponding to an indicator function on state-action pairs. This is to say, we consider a $|\statespace|\times|\actionspace|$ dimensional vector where for a given state-action pair, one entry in $\feat$ takes value one and all others are zero. Let $\feat_i$, $\param_i$ denote the nonzero feature entry and the corresponding entry in the parameter vector for state and action $\st, \ac$. Then, the parameter update rule takes the form
+\begin{equation}
+    \param_i' \gets \param_i + \alpha (\cost + \gamma \min_{\ac' \in \actionspace} Q_{\param}(\st',\ac') - \param_i).
+\end{equation}
+as $\feat_i = 1$, and $\feat_{j} = 0$ for $j \neq i$. Thus, interpreting the parameters $\param$ as the Q function values for each state-action pair, we have exactly recovered the tabular $Q$-learning update, implying tabular $Q$-learning is a special case of this general parametric update. 
+
+\paragraph{Choice of basis functions.} There are a wide variety of possible choices for $\feat$, as in standard basis function regression. Common choices aim to capture some notion of the the local behavior of $Q$ functions; common choices include tile codings and coarse codings (i.e. indicator functions for regions of state space), or radial basis functions, which have exponentially declining importance further from their centers. Alternatively, for expressive function representations, common choices include polynomials and Fourier basis functions. As in standard basis function regression, domain expertise should be utilized whenever possible in the design of the features. 
+
+\paragraph{Convergence of approximate $Q$-learning.} The combination of off-policy $Q$-learning and function approximation is not, in general, guaranteed to converge. We refer the reader to \cite{sutton2018reinforcement} for a collection of counter-examples. In general, the combination of function approximation, bootstrapping, and off-policy training is referred to as the \textit{deadly triad}, and typically results in instability. 
+
+\subsubsection{Neural Fitted $Q$-learning and DQN}
+
+While we have so far discussed $Q$-learning using linear regression on nonlinear features, we will now move to the setting in which the features are learned. Due to their differentiability, expressiveness, and good empirical performance (especially for image inputs), a common choice is a neural network. This approach is typically referred to as either \textit{neural fitted $Q$ iteration} \cite{riedmiller2005neural}, or as the \textit{deep $Q$ network} (DQN), \cite{mnih2015human}. Given the neural network parameterization, the squared TD error loss function has the gradient
+\begin{equation}
+    \nabla_{\param} \ell(\param) = - \E_{\st,\ac,\st'\sim \rho}\left[ (\cost + \gamma \min_{\ac' \in \actionspace} Q_{\param}(\st',\ac') - Q_{\param}(\st,\ac)) \nabla_{\param} Q_{\param}(\st,\ac) \right]
+\end{equation}
+as for standard fitted $Q$-learning. The $Q$ function approximation can, using Monte Carlo approximation of this gradient and backpropagation for neural network optimization, update the parameters of the neural network. 
+
+There are two major non-obvious modifications to standard fitted $Q$-learning that make deep $Q$ networks successful: experience replay \cite{lin1993reinforcement} and lagged $Q$ function updates.
+
+% TODO add algorithm block for DQN
+
+\paragraph{Experience replay and off-policy training.} 
+Neural networks trained in a strictly online fashion, taking gradient steps with respect to the most recent observed input-output pair, result in unstable training, forgetting, and possible divergence. To avoid this, we turn to \textit{experience replay}, in which a history of $(\st, \ac, \cost, \st')$ transitions is stored. For training, a minibatch of these transitions is taken from the experience replay buffer, and used to compute a Monte Carlo estimate of the squared TD error, and then used for gradient descent. 
+
+How do we square the logging of old data with the expectation over the distribution induced by the policy? Is this algorithm on-policy or off-policy? In practice, the entries in the replay buffer are biased toward more recent samples. Thus, the approach is neither completely on-policy or off-policy. In practice, design of this replay buffer is based on heuristics.
+
+\paragraph{Lagged $Q$ updates.} We define the \textit{target} $Q$ function as $Q(\st',\ac')$, the inner $Q$ function within the update, $\min_{\ac' \in \actionspace} Q(\st',\ac')$. To stabilize the DQN learning, it is necessary to represent this with a different network from the other $Q$ function that appears in the TD error equation. We will refer to the parameters of this network  as $\param'$. This network is not learned independently; instead, it is set to the weights of the other $Q$ network on a lagged schedule. A typical approach is to set $\param' = \param$ every $k$ steps, where $k$ is some large constant (e.g. 1000). 
+
+% TODO: add discussion of bias in Q function; double Q learning, TD3.
+
+% TODO: add discussion of other approaches to stabilize learning; 
+% - reward clipping
+% - gradient clipping 
 
 \section{Policy Gradient Methods}
 
 \subsection{The Likelihood Ratio Trick and REINFORCE}
 
-\subsection{Policy Gradient with Deep Representations}
+% \subsection{Policy Gradient with Deep Representations}
 
 % Policy gradient theorem, REINFORCE
 
@@ -27,6 +195,12 @@
 
 % A2C, A3C, other RL algorithms
 
-\section{Further Reading}
+\subsection{Variance Reduction}
 
-% Sutton and Barto
+\subsubsection{Importance Sampling}
+
+\subsubsection{Control Variates}
+
+\section{Exploration}
+
+\section{Bibliographic Notes}

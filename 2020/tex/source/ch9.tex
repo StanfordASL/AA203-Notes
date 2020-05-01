@@ -1,5 +1,30 @@
 \chapter{System Identification}
 
+% % rewrite
+% The problem of having an unknown or partially-known model for dynamical systems is not an uncommon one. 
+% A standard control engineering pipeline, having been given a system to control, is as follows. 
+% First the engineer will attempt to build a model of the dynamics based on known relations, such as e.g. physics, which relies on certain parameters. 
+% Then (often because some parameters governing the dynamics can not easily be directly measured), the engineer will choose control inputs to the system and measure the state evolution, and from this, estimate the parameters. 
+% As a simple example, one can consider identifying a linear model of the form
+% \begin{equation}
+% 	\st_{k+1} = A \st_k + B \ac_k + \w_k,
+% \end{equation}
+% where $A$ (for example) is unknown. Then, after having operated the system from time $k = 0, \ldots, N$, one can choose
+% \begin{equation}
+% \hat{A} = \argmin_{A}\{\sum_{k=0}^{N-1} \|\st_{k+1} - B \ac_k - A \st_k\|_2^2\}
+% \end{equation}
+% as a system estimate (note that this can be solved via least squares).
+
+% This approach raises several questions.
+% \begin{itemize} 
+% 	\item How much data is required to achieve a good estimate of $A$? Moreover, how can we quantify a ``good estimate'' of $A$? Indeed, in the control setting we are usually indifferent to the parameter estimate, and are primarily concerned with the performance of the resulting controller. 
+% 	\item How should we design our system inputs $\ac_{0:N-1}$? The system identification approach typically assumes that an engineer is choosing the inputs\footnote{The choice of optimal inputs to estimate the system under some cost function is typically referred to as the \textit{design of experiments}} and monitoring the system behavior, and so the stability of the unknown system under the choice of inputs is not considered, but what if these assumptions were not satisfied? 
+% 	\item What if our system does not fall into the class of models that we are considering? For example, what if we mistakenly believed that our model was linear while in fact it exhibits nonlinear characteristics?
+% \end{itemize}
+% For the purposes of this class, the most pressing question is how to achieve good performance of the model when the operation of that system is done concurrently with estimation. This differs from the system identification setting in which the estimation task is performed before operation of the system, and the performance of the system during the estimation procedure is not considered. Moreover it also implies that the system identification phase eventually ends before transitioning to the operational phase. Note also that system identification as a discipline covers a wide variety of techniques, much broader than those alluded to here. We refer the reader to \cite{ljung1999system} for a more thorough discussion.
+
+% TODO add discussion of convergence results
+
 
 \section{Linear System Identification}
 
@@ -7,8 +32,6 @@
 % without: least squares
 
 \subsection{Persistent Excitation}
-
-\subsection{Bayesian Least Squares for System Identification}
 
 \subsection{Linear Systems with Observations}
 % with: EM
@@ -25,6 +48,6 @@
 % contrastive 
 % others?
 
-\section{Further Reading}
+\section{Bibliographic Notes}
 
 % astrom book

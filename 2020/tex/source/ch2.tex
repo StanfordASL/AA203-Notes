@@ -1,4 +1,7 @@
-\chapter{Optimal Control Fundamentals}
+\chapter{Optimal Control and Dynamic Programming}
+% TODO: need to improve the flow of this section
+% - decide on order of presentation for different concepts; deterministic vs stochastic, perfect vs imperfect state information, continuous vs discrete time
+
 
 In this section we will introduce the fundamental concepts of optimal control in discrete and continuous time. In particular, we introduce the principle of optimality, which enables dynamic programming. Dynamic programming allows us to solve optimal control problems by recursively solving sub-problems, and this approach is (arguably) the most important concept in our study of optimal control. In addition to studying dynamic programming and the principle of optimality in discrete and continuous time for both deterministic and stochastic systems, we will introduce optimal control algorithms for discrete state spaces.
 
@@ -6,7 +9,7 @@ In this section we will introduce the fundamental concepts of optimal control in
 
 \subsection{Optimal Control in Continuous Time}
 
-In this section, we will outline the deterministic continuous-time optimal control problem that we will aim to solve. We will denote the state at time $t$ as $\st(t) \in \R^n$, and the control as $\ac(t) \in \R^m$. We will also occasionally write these as $\st_t$ and $\ac_t$, respectively. We will write the continuous-time systems dynamics as 
+We will first outline the \textit{deterministic}, \textit{continuous-time} optimal control problem that we will aim to solve, before moving on to alternative problem statements including stochasticity and discrete-time. We will denote the state at time $t$ as $\st(t) \in \R^n$, and the control as $\ac(t) \in \R^m$. We will also occasionally write these as $\st_t$ and $\ac_t$, respectively. We will write the continuous-time systems dynamics as 
 \begin{equation}
     \stdot(t) = \bm{\f}(\st(t),\ac(t),t).
     \label{eq:2_ct_dyn}
@@ -42,7 +45,7 @@ In the previous section, we have developed an optimal control problem statement 
 
 We will index time with $k$, where one increment of this index is equal to some increment of time $\Delta t$. Thus, $\st_k = \st(k \Delta t)$. We will write $N$ for the final time. Then, we will write our system dynamics as 
 \begin{equation}
-    \st_{k+1} = \bm{\f}(\st_k, \ac_k, k)
+    \st_{k+1} = \bm{\f}_k(\st_k, \ac_k)
 \end{equation}
 and our performance measure as 
 \begin{equation}
@@ -50,17 +53,19 @@ and our performance measure as
 \end{equation}
 where $\cost$ is now a stage-wise cost function, $\cost_N$ is a terminal cost function, and the integral of the continuous time formulation is replaced with a sum. 
 
+% TODO need to introduce stochastic optimal control problem
+
 \subsection{Markovian Decision Problems}
 
-Before moving to the principle of optimality, we will formalize the setting in which we will operate for the duration of this class. In particular, we will outline \textit{Markovian} decision problems, variations in their presentation, as well as extensions of this framework. We will first discuss the \textit{perfect state information} case, in which the system state summarizes the full history of the system. We will then briefly discuss the \textit{imperfect state information} case. Typically, finding optimal solutions in this case is much harder than in the perfect state information case. We will introduce it briefly, and in the next chapter we will discuss one practical case in which the imperfect case can be solved effectively. 
+Before moving to the principle of optimality, we will formalize the setting in which we will operate for the duration of this class. In particular, we will outline \textit{Markovian} decision problems, variations in their presentation, as well as extensions of this framework. We will first discuss the \textit{perfect state information} case, in which the system state summarizes the full history of the system. We will then briefly discuss the \textit{imperfect state information} case. Typically, finding optimal solutions in this case is much harder than in the perfect state information case. We will introduce the incomplete state information setting only briefly, and in the next chapter we will discuss one practical case in which the imperfect case can be solved effectively. 
 
 \subsubsection{MDPs}
 
-We will first present the Markov decision process in discrete time, and the continuous time case will look very similar. The fundamental idea behind Markov Decision Processes (MDPs) is that the state dynamics are \textit{Markovian}, or obey the \textit{Markov property}. This property says that all information about the previous history of the system is summarized by its current state. While we have previously considered deterministic dynamics, we will consider probabilistic dynamics of the form 
+We present the Markov decision process in discrete time, and the continuous time case will looks similar. The fundamental idea behind Markov Decision Processes (MDPs) is that the state dynamics are \textit{Markovian}, or obey the \textit{Markov property}. This property says that all information about the previous history of the system is summarized by its current state. While we have so far considered deterministic dynamics, we will consider probabilistic dynamics of the form 
 \begin{equation}
-    \st_{k+1} = \bm{\f}(\st_k, \ac_k, \w_k, k)
+    \st_{k+1} = \bm{\f}_k(\st_k, \ac_k, \w_k)
 \end{equation}
-where $\w_k$ is a stochastic disturbance, with $\w_j$ independent of $\w_i$ for $i \neq j$. This noise term at time $k$ may depend on the state and action at time $k$, but it is independent of the state and action at other time steps. Given this probabilistic dynamics model, we can reason about our conditional distribution of $\st_{k+1}$ given our current state $\st_k$ and action $\ac_k$, which we will write $p(\st_{k+1} \mid \st_k, \ac_k)$. Let 
+where $\w_k$ is a stochastic disturbance, with $\w_j$ independent of $\w_i$ for $i \neq j$. This noise term at time $k$ may depend on the state and action at time $k$, but it is independent of the state and action at other time steps. This noise is typically referred to as the \textit{process noise}. Given this probabilistic dynamics model, we can reason about our conditional distribution of $\st_{k+1}$ given our current state $\st_k$ and action $\ac_k$, which we will write $p(\st_{k+1} \mid \st_k, \ac_k)$. Let 
 \begin{equation}
 \bm{h}_k =(\st_0, \ac_0, \cost_0, \ldots, \st_k, \ac_k)    
 \end{equation} 
@@ -68,22 +73,42 @@ where $\cost_i$ is the accrued cost at timestep $i$. Then, a system is said to b
 \begin{equation}
     p(\st_{k+1} \mid \st_k, \ac_k) = p(\st_{k+1} \mid \bm{h}_k).
 \end{equation}
+% TODO make this a formal definition
 
 In addition to Markovian dynamics, we require an \textit{additive} cost function, $\cost(\st_k, \ac_k, k)$. Finally, we will define the state space $\mathcal{X}$ and action space $\mathcal{U}$, such that $\st_k \in \mathcal{X}$, $\ac_k \in \mathcal{U}$ for all $k$. Given these ingredients, we will define the Markov decision process as the tuple $(\mathcal{X}, \mathcal{U}, \bm{\f}, \cost)$. 
+% TODO define additive cost function
+% TODO formal MDP def
 
 Are these ingredients sufficient to completely define the optimal control problem introduced in the last section? Or equivalently, given the elements of this tuple, can we specify everything about an optimal control problem? The answer is no: we have not included the constraints (for example, control constraints), the final time, or the initial state. Are these elements necessary for the specification of an optimal control problem? We will break these elements down individually.
 
-\paragraph{Constraints:} The control literature frequently includes constraints in the optimal control problem setting. For example, control limits are necessary to ensure commanded actions are physically realizable. In contrast, the artificial intelligence community typically does not consider constraints. For deterministic dynamics, we can include constraints in the cost function: if a constraint is violated, a cost of $\infty$ is returned. Such an approach is common in the literature on optimization \cite{boyd2004convex}. However, this leads to a problem in the stochastic case. Imagine some deterministic dynamics with an additive Gaussian noise term. If we impose state constraints on this system, the infinite support of the Gaussian noise will lead to a non-zero probability of constraints violation at every time step. The tension between stochastic dynamics and constraints is resolved in part by the constrained MDP formulation \cite{altman1999constrained}, in which a budget on constraint violation is allowed. The objective, then, is satisfying the constraint violation budget while minimizing the cost. Generally, however, designing meaningful constraints with stochastic dynamics is an active research problem in the control community. 
+\paragraph{Constraints.} The control literature frequently includes constraints in the optimal control problem setting. For example, control limits are necessary to ensure commanded actions are physically realizable. In contrast, the artificial intelligence community typically does not consider constraints. For deterministic dynamics, we can include constraints in the cost function: if a constraint is violated, a cost of $\infty$ is returned. Such an approach is common in the literature on optimization \cite{boyd2004convex}. However, this leads to a problem in the stochastic case. Imagine some deterministic dynamics with an additive Gaussian noise term. If we impose state constraints on this system, the infinite support of the Gaussian noise will lead to a non-zero probability of constraints violation at every time step. The tension between stochastic dynamics and constraints is resolved in part by the constrained MDP formulation \cite{altman1999constrained}, in which a budget on constraint violation is allowed. The objective, then, is satisfying the constraint violation budget while minimizing the cost. Generally, however, designing meaningful constraints with stochastic dynamics is an active research problem in the control community. 
 % add references
 
-\paragraph{Final time:} A final time may be desired by a system designer, and thus they may choose to include this in their optimal control problem. But, is it necessary to include? Imagine an infinite-horizon optimal control problem, in which we plan a feedback policy that will execute for all time. If there exists a state that the system can reach with finite cost, for which the cost for the rest of the problem is finite (for example, a state for which we can achieve zero cost for the rest of time), then the total cost will be finite. If this is not satisfied, then the total cost is infinite. This is problematic, as it removes the ability to distinguish between different control policies, as both will receive the same (infinite) total cost. This can be resolved in several ways. As discussed in the previous section, we can limit the problem setting to a finite final time. In the infinite horizon case, we could also scale the cost accrued at each timestep so that the total cost is finite. One approach is discounting, in which cost is scaled by a time-varying term. An alternative (but less common) approach is to consider \textit{average} cost, as opposed to total cost. 
+\paragraph{Final time.} A final time may be desired by a system designer, and thus they may choose to include this in their optimal control problem. But, is it necessary to include? Imagine an infinite-horizon optimal control problem, in which we plan a feedback policy that will execute for all time. If there exists a state that the system can reach with finite cost, for which the cost for the rest of the problem is finite (for example, a state for which we can achieve zero cost for the rest of time), then the total cost will be finite. If this is not satisfied, then the total cost is infinite. This is problematic, as it removes the ability to distinguish between different control policies, as both will receive the same (infinite) total cost. This can be resolved in several ways. As discussed in the previous section, we can limit the problem setting to a finite final time. In the infinite horizon case, we could also scale the cost accrued at each timestep so that the total cost is finite. One approach is discounting, in which cost is scaled by a time-varying term. An alternative (but less common) approach is to consider \textit{average} cost, as opposed to total cost. 
 
 
-\paragraph{Initial State:} In the optimal control problem defined previously, we assumed knowledge of the initial state. This knowledge is important if we are designing an \textit{open-loop} sequence of controls. If we are searching for an optimal \textit{control policy}, we do not require the initial state, as we will find a policy that is optimal for all states. The difference between these two approaches will be discussed in depth later in this section. In reinforcement learning where you assume episodic interaction with a system, it is typical to assume a known initial state or a distribution over initial states. This is important as these algorithms typically result in sub-optimal control policies that perform better close to the regions of the state space where they have observed data, and perform worse further from their previous experience. 
+\paragraph{Initial State.} In the optimal control problem defined previously, we assumed knowledge of the initial state. This knowledge is important if we are designing an \textit{open-loop} sequence of controls. If we are searching for an optimal \textit{control policy}, we do not require the initial state, as we will find a policy that is optimal for all states. The difference between these two approaches will be discussed in depth later in this section. In reinforcement learning where you assume episodic interaction with a system, it is typical to assume a known initial state or a distribution over initial states. This is important as these algorithms typically result in sub-optimal control policies that perform better close to the regions of the state space where they have observed data, and perform worse further from their previous experience. 
 
-\subsubsection{POMDPs}
+\subsection{Optimal Control with Incomplete State Information}
 
-In the definition of the Markov decision process, we assumed two necessary features of the dynamics. First, we assumed the dynamics were Markovian; the state contained all information about the history of the system. Second, we assumed that we could directly observe the state of the system (the \textit{perfect information} assumption. In the partially observed MDP (POMDP) setting, we will assume the former but not the later. Specifically, in the POMDP framework, instead of observing the state directly, we observe a (possibly noisy) measurement $\ob_k = \bm{\h}(\st_k, \ac_k, \wob_k, k)$, where $\wob_k$ is a noise term. For example, we may only noisily measure the position of a robot and not the velocity, and thus have incomplete state information. We will typically assume the measurement is independent of the action. Typically, in this setting the measurements are not Markovian. Two strategies are possible: one may design an estimation algorithm to attempt to infer the underlying state $\st_k$, and choose control actions based on this quantity. Alternatively, we can look for a (sub-optimal) control policy that maps observations to actions, ignoring state information. We will address the first case in the next section when we discuss the Linear Quadratic Gaussian (LQG) problem setting. Generally however, this is computationally extremely challenging, and our discussion will be primarily focused on the perfect information case. 
+In the definition of the Markov decision process, we assumed two necessary features of the dynamics. First, we assumed the dynamics were Markovian; the state contained all information about the history of the system. Second, we assumed that we could directly observe the state of the system (the \textit{perfect information} assumption. 
+We now consider the case in which direct, perfect state information isn't available, which we refer to as the \textit{imperfect state information} setting. We have noise-corrupted measurements
+\begin{align}
+    \ob_{k} &= \bm{\h}_k(\st_k, \wob_{k}), \,\, k=0,\ldots,N-1
+\end{align}
+where $\wob_k$ is a noise term which we refer to as the \textit{measurement noise}. This measurement noise is characterized by distribution 
+\begin{equation}
+    p(\cdot\mid \st_k,\ldots,\st_0,\ac_{k-1},\ldots,\ac_0,\w_{k-1},\ldots,\w_{0},\wob_{k-1},\ldots,\wob_{0})
+\end{equation}
+and the initial state $\st_0$ is distributed according to $p(\st_0)$. We will define the information vector as
+\begin{equation}
+    \I_k = [\ob_0^T, \ldots, \ob_k^T, \ac_0^T, \ldots, \ac_{k-1}^T]^T.
+\end{equation}
+Armed with this, we will consider \textit{admissible} policies $\pi(\I_k) \in \mathcal{U}_k$, which implies they are \textit{causal} --- they do not rely on information only available in the future. The goal of the control problem, then is to minimize 
+\begin{equation}
+    \E_{\st_{0},\w_{0:N-1},\wob_{0:N-1}} \left[ \cost_T(\st_N) + \sum_{k=0}^{N-1} \cost(\st_k, \pol(\I_k),\w_{k}) \right].
+\end{equation}
+Treating this problem as a perfect state information problem and attempting to solve directly results in several problems. In addition to the standard difficulties associated with applying DP to generic problems, $\I_k$ has expanding dimension over the length of the problem. Alternatively, we may reason in terms of sufficient statistics: quantities that summarize all of the informational content of $\I_k$. For example, if we can construct a conditional distribution over state, $p(\st_k\mid\I_k)$, we can design a policy of the form $\pol_k(p(\st_k\mid\I_k))$. However, such an approach is typically only tractable in a very limited group of settings. We will discuss one such setting where this approach is tractable in the next chapter, when we discuss the \textit{linear quadratic Gaussian} control setting; we will expand on the general difficulty of optimal control with incomplete state information in the second half of this text. Analogously to the definition of the MDP, we refer to an MDP augmented with an observation function $\h(\cdot,\cdot)$ as a partially-observed MDP (POMDP). 
 
 \section{Dynamic Programming and the Principle of Optimality}
 
@@ -94,8 +119,10 @@ In the definition of the Markov decision process, we assumed two necessary featu
     \label{fig:opt1}
 \end{figure}
 
-In this chapter we will outline the principle of optimality, and the method of dynamic programming (DP), one of two main approaches to solving the optimal control problem. The second, so-called variational approaches based on Pontryagin's Maximum Principle (PMP) will be discussed in future chapters. While dynamic programming has the strong advantage compared to variational methods of yielding a feedback policy, exactly solving the dynamic programming problem is infeasible for many systems. We will address special cases in which the DP problem can be solved exactly, and approximate methods that work for a wide variety of systems. In particular, in this chapter we will discuss exhaustive approaches to dynamic programming for discrete state space problems; such methods may be used as an approximation method for continuous state space problems. In the next chapter we discuss a special case in which dynamic programming is tractable for continuous state spaces. Again, this special case is used for useful approximations for intractable problems. 
+We will now outline the principle of optimality, and the method of dynamic programming (DP), one of two main approaches to solving the optimal control problem. The second, so-called variational approaches based on Pontryagin's Maximum Principle (PMP) will be discussed in future chapters. While dynamic programming has the strong advantage compared to variational methods of yielding a feedback policy, exactly solving the dynamic programming problem is infeasible for many systems. We will address special cases in which the DP problem can be solved exactly, and approximate methods that work for a wide variety of systems. In particular, in this chapter we will discuss exhaustive approaches to dynamic programming for discrete state space problems; such methods may be used as an approximation method for continuous state space problems. In the next chapter we discuss a special case in which dynamic programming is tractable for continuous state spaces. Again, this special case is used for useful approximations for intractable problems. 
 We will first introduce DP for discrete time systems, before extending these methods to the continuous time setting in the next section.
+
+\subsection{Dynamic Programming and the Principle of Optimality}
 
 The principle of optimality is as follows. Figure \ref{fig:opt1} shows a trajectory from point $a$ to $c$. If the cost of the trajectory, $J_{ac} = J_{ab} + J_{bc}$, is minimal, then $J_{bc}$ is also a minimum cost trajectory connecting $b$ and $c$. The proof of this principle, stated informally, is simple. Assume there exists an alternative trajectory connecting $b$ and $c$, for which we will write the cost as $\tilde{J}_{bc}$, that achieves $\tilde{J}_{bc} < J_{bc}$. Then, we have 
 \begin{align}
@@ -171,9 +198,9 @@ and the optimal policy is
 \end{align}
 
 
-\subsection{Optimal Control in Discrete State Spaces}
+\section{Optimal Control in Discrete State Spaces}
 
-We will now look at practical algorithms that leverage the previously described dynamic programming principle. The problem setting we consider for these methods are \textit{discrete state space} and \textit{discrete action space} methods. We will first discuss \textit{policy evaluation}: given some policy $\pi$ and MDP $\mathcal{M}$, we aim to determine the associated expected total cost (or value function), $\J_{\pol}$. In this section we will assume a deterministic policy, but this assumption is easily relaxed.
+We will now look at practical algorithms that use dynamic programming. The problem setting we consider for these methods are \textit{discrete state space} and \textit{discrete action space} methods. We will first discuss \textit{policy evaluation}: given some policy $\pi$ and MDP $\mathcal{M}$, we aim to determine the associated expected total cost (or value function), $\J_{\pol}$. In this section we will assume a deterministic policy, but this assumption is easily relaxed.
 
 \subsubsection{Policy Evaluation}
 
@@ -238,7 +265,7 @@ We will see versions of this relation later in the course that replace the expec
 % value estimation without DP. Why do it? Can work for POMDPs. Interesting contrast.
 
 
-\section{Continuous-Time Optimal Control}
+\section{Continuous-Time Dynamic Programming}
 
 % introduce continuous time MDPs
 
@@ -391,7 +418,7 @@ As a result, the agent should aim to maximize $\cost_f$ to avoid $\mathcal{T}$, 
 \end{equation}
 If the target set membership holds at any time $\tau'$, then $\min_{\tau\in[t,0]} \cost_f(\st(\tau)) \leq \cost_f(\st(\tau')) \leq 0$.
 
-\section{Further Reading}
+\section{Bibliographic Notes}
 
 Our coverage of reachability analysis is based on the \cite{mitchell2005time}, which is an important early work in the field, in addition to being a relatively comprehensive coverage of the method. For a review of differential games with a (slight) emphasis on economics and management science, we refer the reader to \cite{bressan2010noncooperative}. For a review of HJB and continuous time LQR, we refer the reader to \cite{bertsekas1995dynamic} and \cite{kirk2012optimal}.
 
