@@ -80,27 +80,37 @@ where $\w_{k} \sim \mathcal{N}(0, \W)$, and the stage-wise cost is
 \begin{equation}
     \cost_k(\st_k,\ac_k) = \frac{1}{2} ( \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k).
 \end{equation}
-with terminal cost $\frac{1}{2}\st_N^T Q_N \st_N$. We wish to minimize the expected cost. The cost-to-go, as in the deterministic case, will be quadratic. Thus, plugging into the Bellman equation, we have 
+with terminal cost $\frac{1}{2}\st_N^T Q_N \st_N$. We wish to minimize the expected cost. The cost-to-go is
+\begin{equation}
+     \J_{k}^*(\st_{k}) = \st^T_k V_k \st_k + v_k.
+\end{equation}
+where $V_k$ is a positive definite matrix as in the deterministic case, and $v_k$ is an additive constant term. We leave the proof of this cost-to-go to the reader. Plugging into the Bellman equation, we have 
 \begin{align}
 \label{eq:LQR_rec_cost_stoch}
     \J_{k}^*(\st_{k}) &=  \min_{\ac_{k} \in \R^m} \E {\Large[} 
-    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k}\\
-    &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} \nonumber\\
+    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} + v_{k+1}\\
+    &+ \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) + v_{k+1} \nonumber {\Large]} \nonumber\\
     &= \min_{\ac_{k} \in \R^m} {\Large\{} 
-    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k} \\
-    &+ \E {\Large[} \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \nonumber {\Large]} {\Large\}}. \nonumber
+    \frac{1}{2} \st_{k}^T Q_{k} \st_{k} + \frac{1}{2} \ac_{k}^T R_{k} \ac_{k}  + v_{k+1}\\
+    &+ \E {\Large[} \frac{1}{2} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})\nonumber {\Large]} {\Large\}}. \nonumber
 \end{align}
-Following the same minimization procedure as for LQR, we see that the policy is identical to that in Section \ref{sec:disrete_LQR}. The Riccati equation, however, is
+Following the same minimization procedure as for LQR, we see that the policy is identical to that in Section \ref{sec:disrete_LQR}. Then, plugging the policy back in to the dynamic programming recursion, we have
 \begin{align}
-    V_k &= Q_k + L_k^T R_k L_k + \E[(A_{k}+ B_{k} L_k + \w_{k})^T V_{k+1} (A_{k} + B_{k} L_k + \w_{k})] \label{eq:ric_lqr_stoch1}\\
-    &= Q_{k}  + L_{k}^T R_{k} L_{k} + (A_{k} + B_{k} L_{k})^T V_{k+1}   (A_{k} + B_{k} L_{k}) + \tr(\W V_{k+1}) \label{eq:ric_lqr_stoch2}
+    \J_{k}^*(\st_{k}) &= \st_k^T(Q_k + L_k^T R_k L_k + \E[(A_{k}+ B_{k} L_k + \w_{k})^T V_{k+1} (A_{k} + B_{k} L_k + \w_{k})])\st_k  + v_{k+1}\label{eq:ric_lqr_stoch1}\\
+    &= \st_k^T(Q_{k}  + L_{k}^T R_{k} L_{k} + (A_{k} + B_{k} L_{k})^T V_{k+1}   (A_{k} + B_{k} L_{k}))\st_k  + \tr(\W V_{k+1}) + v_{k+1}\label{eq:ric_lqr_stoch2}
 \end{align}
 where $\tr(\cdot)$ denotes the trace. The equality between (\ref{eq:ric_lqr_stoch1}) and (\ref{eq:ric_lqr_stoch2}) holds as 
 \begin{equation}
     \E[(A_{k} + B_{k} L_{k})^T V_{k+1} \w_{k}] = 0
 \end{equation} 
-for zero-mean $\w_{k}$, and $\E[\w_{k}^T V_{k+1} \w_{k}] = \tr(\W V_{k+1})$. Note that this is identical to the deterministic case, other than the additive trace term at the end. 
+for zero-mean $\w_{k}$, and $\E[\w_{k}^T V_{k+1} \w_{k}] = \tr(\W V_{k+1})$. Note that this is identical to the noise-free DP recursion, with the exception of the added trace and constant terms which capture the role of the additive noise. Thus, we have two recursive update equations
+\begin{align}
+    V_k &= Q_{k}  + L_{k}^T R_{k} L_{k} + (A_{k} + B_{k} L_{k})^T V_{k+1}   (A_{k} + B_{k} L_{k}) \\
+    v_k &= v_{k+1} + \tr(\W V_{k+1}) 
+\end{align}
+where the first is the standard Riccati recursion, and the second captures the additive constant term. 
 
+In summary, we have reached the surprising outcome that with additive Gaussian noise, we obtain the same optimal policy as in the deterministic case. The total cost has increased, but it is typical to not store the constant term in the DP recursion, as it does not impact the policy. 
 
 \subsection{LQR with (Bi)linear Cost and Affine Dynamics}
 
@@ -458,23 +468,47 @@ and assume that we may not directly observe $\st$. The initial state $\st_0$, an
 
 Recall the dynamic programming equation for incomplete state information, 
 \begin{equation}
-    \J_k(\st_k) = \min_{\ac_k \in \mathcal{U}(\st_k)} \E_{w_k, \st_k} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\f(\st_k,\ac_k,\w_k)) \mid \bm{i}_k \right].
+    \J_k(\I_k) = \min_{\ac_k \in \mathcal{U}_k} \E_{\st_k, \w_k, \ob_{k+1}} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\I_{k+1}) \mid \I_k, \ac_k \right]
 \end{equation}
-Plugging in for terms (and assuming for now a quadratic cost to go), we have
-\begin{align}
-    \J_k(\st_k) &= \frac{1}{2} \min_{\ac_k \in \mathcal{U}(\st_k)} \E_{\w_k, \st_k} \large[ \st_k^T Q_k \st_k + \ac_k^T R_k \ac_k + \\
-    &\qquad (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k})^T V_{k+1} (A_{k} \st_{k} + B_{k} \ac_{k} + \w_{k}) \mid \bm{i}_k \large]\nonumber\\
-    &= \frac{1}{2} \E_{\st_k} \large[ \st_k^T (Q_k + A_k^T V_{k+1} A_k) \st_k \mid \bm{i}_k \large] + \\
-    & \qquad \frac{1}{2} \E_{\w_k} \large[ \w_k^T Q_k \w_k] + \nonumber\\
-    & \qquad \frac{1}{2} \min_{\ac_k \in \mathcal{U}(\st_k)} \left\{ \ac_k^T (B_k^T V_{k+1} B_k + R_k) \ac_k + 2 \E[\st_k \mid \bm{i}_k]^T A_k^T V_{k+1} B_k \ac_k \right\}.\nonumber
-\end{align}
-There are several things to notice about this equation. First, the last minimization term exactly matches the minimization that resulted in the LQR feedback policy, just defined in terms of the conditional expectation of the state given all information. We will skip the rest of the proof due to space constraints, but the takeaway from the above is that the policy ends up being a linear feedback law on the expected state. Moreover, this linear policy results in the dynamic programming equation yielding a Riccati recursion. Finally, ignoring some technical details and skipping a more gentle introduction to estimation, the optimal conditional expectation for the state in the linear quadratic setting is provided by the Kalman filter (or the linear quadratic estimator, as it is also known).
-
-So, to summarize, the optimal control policy takes the form
+for information vector
 \begin{equation}
-    \pol^*(\bm{i}_k) = L_k \hat{\st}_k
+    \I_k = [\ob_0^T, \ldots, \ob_k^T, \ac_0^T, \ldots, \ac_{k-1}^T]^T.
 \end{equation}
-where $\hat{\st}_k$ is the state estimate from the Kalman filter, and $L_k$ is the standard gain from LQR. Note that the Kalman filter maintains a Gaussian estimate of the state, and so the sufficient statistics are the mean and variance. However, the policy depends only on the mean. The policy can be designed as if access to perfect state information is available, while the estimator can be designed without considering the controller. This is known as the \textit{separation principle}, and holds for both continuous and discrete time. For a more complete proof of the preceding discussion, we refer the reader to \cite{bertsekas1995dynamic}. For completeness, we provide the update equations for the LQE below.
+Plugging in terms, we have
+\begin{align}
+    \J_{N-1}(\I_{N-1}) &= \frac{1}{2} \min_{\ac_{N-1} \in \mathcal{U}_{N-1}} \E_{\w_{N-1}, \st_{N-1}, \ob_{N-1}} \large[ \st_{N-1}^T Q_{N-1} \st_{N-1} + \ac_{N-1}^T R_k \ac_{N-1} + \\
+    &\qquad (A_{N-1} \st_{N-1} + B_{N-1} \ac_{N-1} + \w_{N-1})^T Q_{N} (A_{N-1} \st_{N-1} + B_{N-1} \ac_{N-1} + \w_{N-1}) \mid \I_{N-1}, \ac_{N-1} \large]\nonumber\\
+    &= \frac{1}{2} \E_{\st_{N-1}} \large[ \st_{N-1}^T (Q_{N-1} + A_{N-1}^T V_{N} A_{N-1}) \st_{N-1} \mid \I_{N-1} \large] +  \frac{1}{2} \E_{\w_{N-1}} \large[ \w_{N-1}^T Q_{N-1} \w_{N-1}] + \nonumber\\
+    & \qquad \frac{1}{2} \min_{\ac_{N-1} \in \mathcal{U}_{N-1}} \left\{ \ac_{N-1}^T (B_{N-1}^T V_{N} B_{N-1} + R_{N-1}) \ac_{N-1} + 2 \E[\st_{N-1} \mid \I_{N-1}]^T A_{N-1}^T V_{N} B_{N-1} \ac_{N-1} \right\}\nonumber
+\end{align}
+where the equality between the first and second equation hold as a result of $\E[\w_{N-1} \mid \I_{N-1}] = 0$.
+As in our previous derivation of stochastic LQR, we can solve the minimizationo over actions to yield 
+\begin{equation}
+    \ac_{N-1}^* = - (B_{N-1}^T Q_N B_{N-1} + R_{N-1})^{-1} B_{N-1}^T Q_N A_{N-1} \E[\st_{N-1} \mid \I_{N-1}].
+\end{equation}
+Note that this is exactly the standard LQR policy, with the action replaced by the mean state estimate given all measurements. Substituting this policy back in to the DP recursion, we have
+\begin{align}
+    \J_{N-1}(\I_{N-1}) &= \frac{1}{2}  \E_{\st_{N-1}}[ \st_{N-1}^T V_{N-1} \st_{N-1}]  + \E_{\w_{N-1}}\large[ \w_{N-1}^T Q_{N} \w_{N-1}] + \label{eq:lqg1}\\
+    &\qquad \E_{\st_{N-1}}[ (\st_{N-1} - \E[\st_{N-1} \mid \I_{N-1}])^T P_{N-1} (\st_{N-1} - \E[\st_{N-1} \mid \I_{N-1}])] \nonumber
+\end{align}
+where
+\begin{align}
+    P_{N-1} &= A^T_{N-1} Q_N B_{N-1} (R_{N-1} + B^T_{N-1} Q_N B_{N-1})^{-1} B^T_{N-1} Q_N A_{N-1}\\
+    V_{N-1} &= A_{N-1}^T Q_N A_{N-1} + Q_{N-1} - P_{N-1}.
+\end{align}
+Note that \eqref{eq:lqg1} closely matches the cost-to-go of the standard LQR recursion, with the last term capturing the cost penalty associated with imperfect state estimation. Thus, in the limit of perfect state information, this penalty term vanishes and the expectation over state becomes a simple evaluation, yielding the standard stochastic LQR cost-to-go.
+
+One natural question is whether we can extract a recursive DP update scheme, comparable to the standard LQR setting, from \eqref{eq:lqg1}. This is non-obvious as term containing $\st_{N-1} - \E[\st_{N-1}\mid \I_{N-1}]$ introduces difficulties to our previous approach. To address this, we turn to the fact (proved in \cite{bertsekas1995dynamic}) that 
+\begin{equation}
+    \st_{k} - \E[\st_{k}\mid \I_{k}] = \f_k(\st_0, \w_0,\ldots,\w_{k-1}, \wob_0, \ldots, \wob_{k})
+\end{equation}
+or equivalently, the estimation error term is independent of the choice of control actions. This is surprising: no choice of action will allow us to identify the state faster than any other. However, recall that due to the linearity of the dynamics, we may write the state at timestep $k$ as a linear function of the initial state, the noise inputs, and the control input. Thus, the control inputs serve only to shift the mean of the Gaussian state distribution by  $B_{k-1} \ac_{k-1} + A_{k-1} B_{k-2} \ac_{k-2} + \ldots + A_{k-1} \cdots A_{1} B_{0} \ac_0$, which does not change the estimation problem. As a consequence, the additive estimation penalty is an irreducible constant term. Thus, the optimal policy can be computed solely via standard Riccati recursion, yielding a policy of  the form
+\begin{equation}
+    \pol^*(\bm{i}_k) = L_k \E[\st_{k}\mid \I_{k}]
+\end{equation}
+for $L_k$ as defined for standard LQR.
+
+At this point, there are several things to note. Because our choice of action does not effect estimation, we are free to independently optimize the estimator, and we avoid having to jointly design the controller and estimator. This is the \textit{separation principle}. The optimal estimator in this case is the Kalman filter, also referred to as the linear quadratic estimator (LQE). For completeness, we provide the update equations for the LQE below. Moreover, note that in this case, the policy relies only on the mean state estimate, and does not depend on e.g. the variance of the estimate. In general, these conditions will not hold. For arbitrary imperfect state information problems, the optimal estimator and controller must be jointly designed, as the choice of action will in fact impact estimation. Moreover, the policy will in general be a function of higher order moments of the state estimate than simply the mean. 
 
 % TODO: add full proof of separation principle
 

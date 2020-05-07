@@ -89,27 +89,6 @@ Are these ingredients sufficient to completely define the optimal control proble
 
 \paragraph{Initial State.} In the optimal control problem defined previously, we assumed knowledge of the initial state. This knowledge is important if we are designing an \textit{open-loop} sequence of controls. If we are searching for an optimal \textit{control policy}, we do not require the initial state, as we will find a policy that is optimal for all states. The difference between these two approaches will be discussed in depth later in this section. In reinforcement learning where you assume episodic interaction with a system, it is typical to assume a known initial state or a distribution over initial states. This is important as these algorithms typically result in sub-optimal control policies that perform better close to the regions of the state space where they have observed data, and perform worse further from their previous experience. 
 
-\subsection{Optimal Control with Incomplete State Information}
-
-In the definition of the Markov decision process, we assumed two necessary features of the dynamics. First, we assumed the dynamics were Markovian; the state contained all information about the history of the system. Second, we assumed that we could directly observe the state of the system (the \textit{perfect information} assumption. 
-We now consider the case in which direct, perfect state information isn't available, which we refer to as the \textit{imperfect state information} setting. We have noise-corrupted measurements
-\begin{align}
-    \ob_{k} &= \bm{\h}_k(\st_k, \wob_{k}), \,\, k=0,\ldots,N-1
-\end{align}
-where $\wob_k$ is a noise term which we refer to as the \textit{measurement noise}. This measurement noise is characterized by distribution 
-\begin{equation}
-    p(\cdot\mid \st_k,\ldots,\st_0,\ac_{k-1},\ldots,\ac_0,\w_{k-1},\ldots,\w_{0},\wob_{k-1},\ldots,\wob_{0})
-\end{equation}
-and the initial state $\st_0$ is distributed according to $p(\st_0)$. We will define the information vector as
-\begin{equation}
-    \I_k = [\ob_0^T, \ldots, \ob_k^T, \ac_0^T, \ldots, \ac_{k-1}^T]^T.
-\end{equation}
-Armed with this, we will consider \textit{admissible} policies $\pi(\I_k) \in \mathcal{U}_k$, which implies they are \textit{causal} --- they do not rely on information only available in the future. The goal of the control problem, then is to minimize 
-\begin{equation}
-    \E_{\st_{0},\w_{0:N-1},\wob_{0:N-1}} \left[ \cost_T(\st_N) + \sum_{k=0}^{N-1} \cost(\st_k, \pol(\I_k),\w_{k}) \right].
-\end{equation}
-Treating this problem as a perfect state information problem and attempting to solve directly results in several problems. In addition to the standard difficulties associated with applying DP to generic problems, $\I_k$ has expanding dimension over the length of the problem. Alternatively, we may reason in terms of sufficient statistics: quantities that summarize all of the informational content of $\I_k$. For example, if we can construct a conditional distribution over state, $p(\st_k\mid\I_k)$, we can design a policy of the form $\pol_k(p(\st_k\mid\I_k))$. However, such an approach is typically only tractable in a very limited group of settings. We will discuss one such setting where this approach is tractable in the next chapter, when we discuss the \textit{linear quadratic Gaussian} control setting; we will expand on the general difficulty of optimal control with incomplete state information in the second half of this text. Analogously to the definition of the MDP, we refer to an MDP augmented with an observation function $\h(\cdot,\cdot)$ as a partially-observed MDP (POMDP). 
-
 \section{Dynamic Programming and the Principle of Optimality}
 
 \begin{figure}[t]
@@ -188,35 +167,101 @@ The intuition behind the stochastic principle of optimality is effectively the s
 The stochastic version of the principle of optimality leads to a concomitant dynamic programming algorithm, which takes the form
 \begin{align}
     \J_N(\st_N) &= \cost_N(\st_N)\\
-    \J_k(\st_k) &= \min_{\ac_k \in \mathcal{U}(\st_k)} \E_{w_k} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\f(\st_k,\ac_k,\w_k)) \right]
+    \J_k(\st_k) &= \min_{\ac_k \in \mathcal{U}(\st_k)} \E_{\w_k} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\f(\st_k,\ac_k,\w_k)) \right]
     \label{eq:DP_rec_stoch}
 \end{align}
 and the optimal policy is
 \begin{align}
-    \pol^*_k(\st_k) &= \argmin_{\ac_k \in \mathcal{U}(\st_k)} \E_{w_k} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\f(\st_k,\ac_k,\w_k)) \right].
+    \pol^*_k(\st_k) &= \argmin_{\ac_k \in \mathcal{U}(\st_k)} \E_{\w_k} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\f(\st_k,\ac_k,\w_k)) \right].
     \label{eq:DP_rec_stoch}
 \end{align}
 
 
+\section{Optimal Control with Incomplete State Information}
+
+In the definition of the Markov decision process, we assumed two necessary features of the dynamics. First, we assumed the dynamics were Markovian; the state contained all information about the history of the system. Second, we assumed that we could directly observe the state of the system (the \textit{perfect information} assumption. 
+We now consider the case in which direct, perfect state information isn't available, which we refer to as the \textit{imperfect state information} setting. We have noise-corrupted measurements
+\begin{align}
+    \ob_{k} &= \bm{\h}_k(\st_k, \wob_{k}), \,\, k=0,\ldots,N-1
+\end{align}
+where $\wob_k$ is a noise term which we refer to as the \textit{measurement noise}. This measurement noise is characterized by distribution 
+\begin{equation}
+    p(\cdot\mid \st_k,\ldots,\st_0,\ac_{k-1},\ldots,\ac_0,\w_{k-1},\ldots,\w_{0},\wob_{k-1},\ldots,\wob_{0})
+\end{equation}
+and the initial state $\st_0$ is distributed according to $p(\st_0)$. We will define the information vector as
+\begin{equation}
+    \I_k = [\ob_0^T, \ldots, \ob_k^T, \ac_0^T, \ldots, \ac_{k-1}^T]^T.
+\end{equation}
+Note that this information vector contains all information directly observable to the decision-making agent at timestep $k$. Armed with this, we will consider \textit{admissible} policies $\pi(\I_k) \in \mathcal{U}_k$, which implies they are \textit{causal} --- they do not rely on information only available in the future. The goal of the control problem, then is to minimize 
+\begin{equation}
+    \E_{\st_{0},\w_{0:N-1},\wob_{0:N-1}} \left[ \cost_T(\st_N) + \sum_{k=0}^{N-1} \cost(\st_k, \pol(\I_k),\w_{k}) \right].
+\end{equation}
+Given this objective, we may state the dynamic programming equation in terms of information vectors
+\begin{equation}
+    \J_k(\I_k) = \min_{\ac_k \in \mathcal{U}_k} \E_{\st_k, \w_k, \ob_{k+1}} \left[ \cost_k(\st_k,\ac_k,\w_k) + \J_{k+1}(\bm{i}_{k+1}) \mid \I_k, \ac_k \right]
+\end{equation}
+This dynamic programming recursion replaces the state with the information vector (which itself summarizes all information about the problem), but otherwise proceeds as normal. However, using this DP recursion directly results in several problems. In addition to the standard difficulties associated with applying DP to generic problems, $\I_k$ has expanding dimension over the length of the problem.
+In addition to this, computing the conditional expectation over the state is difficult, as the posterior belief over the state may not have a closed form representation for general problem settings.
+
+Alternatively to this approach, we may reason in terms of sufficient statistics: quantities that summarize all of the informational content of $\I_k$. For example, if we can construct a conditional distribution over state, $p(\st_k\mid\I_k)$, we can design a policy of the form $\pol_k(p(\st_k\mid\I_k))$. However, such an approach is typically only tractable in a very limited group of settings. We will discuss one such setting where this approach is tractable in the next chapter, when we discuss the \textit{linear quadratic Gaussian} control setting; we will expand on the general difficulty of optimal control with incomplete state information in the second half of this text. Analogously to the definition of the MDP, we refer to an MDP augmented with an observation function $\bm{\h}(\cdot,\cdot)$ as a partially-observed MDP (POMDP). 
+
+
 \section{Optimal Control in Discrete State Spaces}
 
-We will now look at practical algorithms that use dynamic programming. The problem setting we consider for these methods are \textit{discrete state space} and \textit{discrete action space} methods. We will first discuss \textit{policy evaluation}: given some policy $\pi$ and MDP $\mathcal{M}$, we aim to determine the associated expected total cost (or value function), $\J_{\pol}$. In this section we will assume a deterministic policy, but this assumption is easily relaxed.
+We will now look at a handful of practical algorithms that use dynamic programming. The problem setting we consider for these methods are \textit{discrete state space} and \textit{discrete action space} methods. We will first discuss \textit{policy evaluation}: given some policy $\pi$ and MDP $\mathcal{M}$, we aim to determine the associated expected total cost (or value function), $\J_{\pol}$. Following this, we will discuss \textit{policy improvement} methods, in particular, policy iteration and value iteration. We consider the discrete state space setting as it makes exact dynamic programming tractable---by representing the value function and the policy as lookup tables, we may exactly use the previously developed dynamic programming principles. This setting is one of a small number in which dynamic programming can be performed without approximation. 
 
-\subsubsection{Policy Evaluation}
+We will assume a deterministic policy, but this assumption is easily relaxed. We will discuss both the finite horizon setting, in which the problem ends after a fixed number of time steps, and the infinite horizon setting in which the problem continues forever. In this case, the cost function and dynamics are not time-varying, and we assume the problem is discounted (as discussed previously). 
 
-The total expected cost associated with a state $\ac$ may be written as 
+\subsection{Policy Evaluation}
+
+\subsubsection{Finite Horizon} 
+
+The total expected cost associated with a state $\st$ may be written as 
 \begin{equation}
-    \J_k^{\pol}(\st) \gets \cost_k(\st, \pol(\st)) + \sum_{\st' \in \statespace} p(\st' \mid \st, \pol(\st)) J^{\pol}_{k+1}(\st'). 
+    \J_k^{\pol}(\st) \gets \cost_k(\st, \pol(\st)) + \sum_{\st' \in \statespace} p(\st' \mid \st, \pol(\st)) \J^{\pol}_{k+1}(\st') \label{eq:fh_pe}. 
 \end{equation}
 Given a model of the dynamics, which we (for now) will assume known, we exactly have access to the density $p(\st' \mid \st, \pol(\st))$. Thus, the algorithm proceeds backward in time, exactly computing this expectation each time. 
 
-While this is intuitive for the finite horizon setting, what about the infinite horizon problem setting? This same backward iteration can be repeated until convergence. It will, in the limit, converge to the true value function. Note that for infinite horizon problems, the value function is not time varying.
-% TODO add more on this
-% TODO add algorithm block
+\subsubsection{Infinite Horizon} 
 
-\subsubsection{Value Iteration}
+This same backward iteration can be repeated until convergence in the infinite horizon setting. It will, in the limit, converge to the true value function. Note that for infinite horizon problems, the value function is not time varying. The outline for infinite horizon policy evaluation is given in Algorithm \ref{alg:PE}. In this setting, we use a threshold $\delta$ for convergence. That is, the dynamic programming recursion is continued until the value estimate changes by less than $\delta$ for each state. 
 
-Having discussed the computation of the value function for a fixed policy, we now proceed to the policy improvement setting, in which we aim to compute the optimal policy. \textit{Value iteration} follows closely from the policy evaluation setting. In particular, for each $\st \in \statespace$, we perform
+This iteration, effectively, performs dynamic programming backward in time until the effect of the finite horizon is forgotten. That is, the time-dependency of the value function is more impactful, and the policy is greedier, closer to the end of the problem. Infinite horizon approaches proceed backward in time until they reach a fixed point, where the value function (effectively) does not change between iteration. This fixed point is the unique solution of the Bellman equation.
+
+% TODO add discussion of absorbing states
+
+% TODO add proof of convergence of policy eval
+
+% TODO add discussion of linear method for value function computation
+
+\begin{algorithm}[t]
+\caption{Infinite Horizon Policy Evaluation}
+\centering
+\label{alg:PE}
+
+%\begin{minipage}[t]{0.5\textwidth}
+\begin{algorithmic}[1]
+    \Require Policy $\pol$, termination criterion $\delta>0$, discount factor $\gamma$
+    \State Initialize $\J(\st)$ for all $\st$ arbitrarily, with terminal value $0$, and $\epsilon>\delta$
+    \While{$\epsilon > \delta$}
+        \For{each $\st \in \statespace$}
+            \State $\hat{\J}(\st) \gets \cost(\st, \pol(\st)) + \gamma \sum_{\st' \in \statespace} p(\st' \mid \st, \pol(\st)) \J(\st')$
+            \State $\delta \gets \max(\delta, |\J(\st) - \hat{\J}(\st)|)$
+            \State $\J(\st) \gets \hat{\J}(\st)$
+        \EndFor
+    \EndWhile
+    \State \Return $\J(\st)$ for each $\st \in \statespace$ 
+\end{algorithmic}
+%\end{minipage}
+\end{algorithm}
+
+
+\subsection{Value Iteration}
+
+Having discussed the computation of the value function for a fixed policy, we now proceed to the policy improvement setting, in which we aim to compute the optimal policy. 
+
+\subsubsection{Finite Horizon} 
+\textit{Value iteration} follows closely from the policy evaluation setting. In particular, for each $\st \in \statespace$, we perform
 \begin{equation}
     \J^*_k(\st) \gets \min_{\ac \in \actionspace} \left\{\cost_k(\st, \ac) + \sum_{\st' \in \statespace} p(\st' \mid \st, \ac) J^*_{k+1}(\st') \right\}. \label{eq:value_itr}
 \end{equation}
@@ -250,20 +295,68 @@ and thus we can iterate backward in time computing the Q function for each state
 \begin{equation}
     Q^{*}_k(\st, \ac) = \cost_k(\st, \ac) + \sum_{\st' \in \statespace} p(\st' \mid \st, \ac) \min_{\ac' \in \actionspace}  Q^{*}_{k+1}(\st', \ac').
 \end{equation}
-We will see versions of this relation later in the course that replace the expectation over $\st'$ with experience to learn Q functions from data. 
+We will see versions of this relation later in the course that replace the expectation over $\st'$ with observed transitions to learn Q functions from data. 
 
-% TODO add algorithm blocks
+\subsubsection{Infinite Horizon} 
+Similarly to infinite horizon policy evaluation, value iteration in the infinite horizon setting iterates backward in time until a convergence threshold is met. The procedure is described in Algorithm \ref{alg:VI}.
 
-\subsubsection{Policy Iteration}
+\begin{algorithm}[t]
+\caption{Infinite Horizon Value Iteration}
+\centering
+\label{alg:VI}
 
-% TODO
+%\begin{minipage}[t]{0.5\textwidth}
+\begin{algorithmic}[1]
+    \Require Termination criterion $\delta>0$, discount factor $\gamma$
+    \State Initialize $\J(\st)$ for all $\st$ arbitrarily, with terminal value $0$, and $\epsilon>\delta$
+    \While{$\epsilon > \delta$}
+        \For{each $\st \in \statespace$}
+            \State $\hat{\J}(\st) \gets \min_{\ac \in \actionspace} \left\{\cost(\st, \ac) + \sum_{\st' \in \statespace} p(\st' \mid \st, \ac) \J(\st')\right\}$
+            \State $\delta \gets \max(\delta, |\J(\st) - \hat{\J}(\st)|)$
+            \State $\J(\st) \gets \hat{\J}(\st)$
+        \EndFor
+    \EndWhile
+    \State \Return $\pi(\st) = \argmin_{\ac\in\actionspace} \left\{\cost(\st, \ac) + \sum_{\st' \in \statespace} p(\st' \mid \st, \ac) \J^*(\st')\right\}$ for each $\st \in \statespace$
+\end{algorithmic}
+%\end{minipage}
+\end{algorithm}
 
-\subsubsection{Monte Carlo Policy Improvment}
+% TODO add discussion of asynch DP, prioritized VI
 
-% TODO
+\subsection{Policy Iteration}
 
-% value estimation without DP. Why do it? Can work for POMDPs. Interesting contrast.
+Policy iteration interleaves a \textit{policy evaluation} step with a \textit{policy improvement} step. In short, policy improvement alternates between evaluation of some policy to compute a value function, and a policy improvement step in which the value function is used to compute an improved policy. 
 
+The overall policy iteration process happens as follows. First, a policy evaluation step is performed to obtain the value function associated with the current policy. Then, the policy is updated for each state. We will outline policy iteration in the infinite horizon case only, for which there are possible performance improvements relative to value iteration. 
+
+The overall policy iteration algorithm is outlined in Algorithm \ref{alg:PI}. The policy evaluation step proceeds as in Algorithm \ref{alg:PE}. This policy evaluation step yield value function $\J$. Then the policy improvement step consists of computing 
+\begin{equation}
+    \pol(\st) \gets \argmin_{\ac\in\actionspace} \left\{ \cost(\st, \ac) + \sum_{\st' \in \statespace} p(\st' \mid \st, \ac) J(\st') \right\}
+\end{equation}
+or equivalently, $\pol(\st) \gets \argmin_{\ac\in\actionspace} Q(\st,\ac)$ for each state. Whereas value iteration interleaves policy improvement and policy evaluation at every iteration, policy iteration instead performs policy evaluation until convergence before performing policy improvement. For some MDPs, this may converge faster than value iteration. 
+
+\begin{algorithm}[t]
+\caption{Infinite Horizon Policy Iteration}
+\centering
+\label{alg:PI}
+%\begin{minipage}[t]{0.5\textwidth}
+\begin{algorithmic}[1]
+    \Require Discount factor $\gamma$
+    \State Initialize $\J(\st)$ and $\pol(\st), \hat{\pol}(\st)$ for all $\st$ arbitrarily, with $\pol(\st) \neq \hat{\pol}(\st)$ for some $\st \in \statespace$
+    \While{$\pol(\st) \neq \hat{\pol}(\st)$ for some $\st \in \statespace$ }
+        \State $\pol(\st) \gets \hat{\pol}(\st)$ for all $\st \in \statespace$
+        \State Perform policy evaluation step with $\pol$, yielding value function $\J$
+        \State Perform policy improvement step with $\J$, yielding improved policy $\hat{\pi}$
+    \EndWhile
+    \State \Return $\pi(\st) = \argmin_{\ac\in\actionspace} \left\{\cost(\st, \ac) + \sum_{\st' \in \statespace} p(\st' \mid \st, \ac) \J(\st')\right\}$ for each $\st \in \statespace$
+\end{algorithmic}
+%\end{minipage}
+\end{algorithm}
+
+
+\subsubsection{Generalized Policy Iteration} 
+
+The policy iteration algorithm consists of two subroutines, performed iteratively: policy evaluation and policy improvement. We have specified algorithms for these two subroutines, in the form of one step dynamic programming-based approaches. Moreover, we have specified that these two subroutines run until convergence before the next subroutine commences. These two subroutines are general however, and can be replaced with alternative approaches. Moreover, these subroutines do not have to run to convergence before the next subroutine begins. We refer to the general algorithm iterating between some form of policy evaluation and improvement as \textit{generalized policy iteration}. 
 
 \section{Continuous-Time Dynamic Programming}
 

@@ -67,9 +67,9 @@ where $\ac_{\epsilon}$ denotes an action sampled uniformly from the action space
     \Require Step size $\alpha \in (0,1]$, action selection rule $\pol(\cdot; \cdot)$
     \State Initialize $Q(\st,\ac)$ for all $\st \in \statespace, \ac \in \actionspace$
     \For{each episode, $n = 0, \ldots, N$}
-        \State Initialize state $\st_1$
+        \State Initialize state $\st_0$
         \State $\ac_t \gets \pol(\st_t; Q)$
-        \For{$t = 1, \ldots, T$}
+        \For{$t = 0, \ldots, T$}
             \State Observe next state $\st_{t+1}$, cost $\cost_{t}$
             \State $\ac_{t+1} \gets \pol(\st_{t+1}; Q)$
             \State $Q(\st_t,\ac_t) \gets Q(\st_t,\ac_t) + \alpha (\cost_t + \gamma Q(\st_{t+1},\ac_{t+1}) - Q(\st_t,\ac_t))$
@@ -92,8 +92,8 @@ where $\ac_{\epsilon}$ denotes an action sampled uniformly from the action space
     \Require Step size $\alpha \in (0,1]$, action selection rule $\pol(\cdot; \cdot)$
     \State Initialize $Q(\st,\ac)$ for all $\st \in \statespace, \ac \in \actionspace$
     \For{each episode, $n = 0, \ldots, N$}
-        \State Initialize state $\st_1$
-        \For{$t = 1, \ldots, T$}
+        \State Initialize state $\st_0$
+        \For{$t = 0, \ldots, T$}
             \State $\ac_t \gets \pol(\st_t; Q)$
             \State Observe next state $\st_{t+1}$, cost $\cost_{t}$
             \State $Q(\st_t,\ac_t) \gets Q(\st_t,\ac_t) + \alpha (\cost_t + \gamma \min_{\ac' \in \actionspace} Q(\st_{t+1},\ac') - Q(\st_t,\ac_t))$
@@ -179,19 +179,120 @@ How do we square the logging of old data with the expectation over the distribut
 % - reward clipping
 % - gradient clipping 
 
-\section{Policy Gradient Methods}
+\section{Policy Gradient and Monte Carlo Policy Improvement}
+
+In the previous section we discussed methods that learned $Q$ functions, for which action selection consisted of greedy optimization. In this section, we will discuss methods that directly optimize the policy with respect to total expected cost. These methods do not rely on bootstrapping, unlike $Q$-learning and SARSA. 
+
+We will first discuss Monte Carlo methods in the tabular setting, in which the state and action space are discrete. This discussion will cover both the policy evaluation and the improvement setting. Following this, we will discuss the policy gradient approach, which allows optimization of parameterized policies and will be a key tool in our discussion of actor-critic methods in the next section. 
+We assume the initial state at the start of each episode is $\st_0 \sim p(\st_0)$, and that the MDP does not change between episodes. 
+
+\subsection{Monte Carlo Policy Evaluation}
+
+Before considering policy improvement, we will discuss the policy evaluation setting, in which we aim to estimate the value function associated with a fixed policy. We will assume episodic interaction with the environment, and that the value function is not time varying.
+% TODO add note discussing finite horizon with non time varying 
+
+The algorithm is presented in Algorithm \ref{alg:MCPE}. Here, $G$ denotes the total return for an episode. The rollouts (trajectories) may be computed via interaction with the true MDP or a simulated system. Algorithm \ref{alg:MCPE} shows \textit{first-visit} evaluation. In this approach, the value for each state is estimated as the average (over episodes) of the sum of costs from the first time a state is visited to the end of the episode. This is in contrast to \textit{every-visit} evaluation, in which the the sum of costs from each time a state is visited is used to estimate the value. 
+
+In addition to Monte Carlo estimation of value functions, we may also perform Monte Carlo estimation of $Q$ functions. This approach will be useful for model-free policy improvement. Monte Carlo $Q$-function policy estimation proceeds identically to value function estimation, but replaces the estimation step 
+\begin{equation}
+    \hat{\J}(\st_t) \gets G
+\end{equation}
+with a state-action estimation step
+\begin{equation}
+    \hat{Q}(\st_t, \ac_t) \gets G
+\end{equation}
+and similarly, the $Q$ function is the average of the returns across episodes. Note that in the tabular setting, this has a limitation: instead of having to estimate $|\statespace|$ entries, we must now estimate $|\statespace| \times |\actionspace|$ entries. Moreover, for a deterministic policy, many state-action pairs will never be visited. Thus, when used as an inner subroutine in policy improvement, sufficient exploration will be critical. 
+
+\begin{algorithm}[t]
+\caption{First-Visit Monte Carlo Policy Evaluation}
+\centering
+\label{alg:MCPE}
+
+%\begin{minipage}[t]{0.5\textwidth}
+\begin{algorithmic}[1]
+    \Require Policy $\pol$.
+    \State Initialize $\J(\st)$ arbitrarily for all $\st\in \statespace$, empty list $\text{Returns}(\st)$ for all $\st \in \statespace$
+    \For{each episode, $n = 0, \ldots, N$}
+        \State Generate rollout $\tau = (\st_0, \ac_0, \cost_0, \ldots, \st_T, \ac_T, \cost_T)$
+        \State $G \gets 0$
+        \For{$t = T, \ldots, 0$}
+            \State $G \gets \gamma G + \cost_t$
+            % \If{$\st_t \notin \{\st_T, \ldots, \st_{t+1}\}$}
+            \State $\hat{\J}(\st_t) \gets G$
+            % \EndIf
+        \EndFor
+        \State Append $\hat{\J}(\st)$ to $\text{Returns}(\st)$ for all $\st \in \statespace$
+        \State $\J(\st) \gets \text{average(Returns}(\st))$ for all $\st \in \statespace$
+    \EndFor
+\end{algorithmic}
+%\end{minipage}
+\end{algorithm}
+
+
+\subsection{Monte Carlo Policy Improvement}
+
+Having constructed an approach for Monte Carlo policy evaluation, we may now consider policy improvement. Monte Carlo policy improvement is an instantiation of generalized policy iteration, where the evaluation step is the $Q$ function policy evaluation step described previously. This is interleaved with a greedy policy improvement step, of the form
+\begin{equation}
+    \pol(\st) \gets \argmin_{\ac\in\actionspace}Q(\st,\ac).
+\end{equation}
+These two steps are typically iterated between after every episode. That is, the standard pipeline is to first, given a policy, rollout on the environment. Given that rollout, the policy estimation phase may be performed. Following this, policy improvement is performed, and the loop begins again. 
+
+In contrast to standard policy iteration, this approach does not iterate over every state in the policy evaluation step. Thus, effective policy evaluation relies on sufficient exploration. A standard approach is to consider \textit{soft} policies, which have non-zero probability associated with each action, at each state. Additionally, as time progresses, these policies become less soft (i.e. put less probability mass on sub-optimal actions) to ensure convergence. A typical approach is $\epsilon$-greedy, as discussed in the previous section. Given some technical conditions on the decay of $\epsilon$, Monte Carlo policy improvement can be shown to converge to the optimal policy. 
+
+% TODO add proof, discussion of epsilon greedy convergence
 
 \subsection{The Likelihood Ratio Trick and REINFORCE}
 
-% \subsection{Policy Gradient with Deep Representations}
+We have so far considered direct policy optimization via Monte Carlo methods in the tabular setting. We will now look at the approximate setting, in which we aim to optimize a parameterized policy, which we write $\pol_{\param}$. We will also consider stochastic policies, which we will write as $\pol_{\param}(\ac\mid\st)$, where $\pol_{\param}(\cdot\mid\st)$ is a conditional probability density. We will write the \textit{return} of the policy as a function of the policy parameters as 
+\begin{equation}
+    G(\param) = \E_{\st_0}[\J^{\pol_{\param}}(\st_0)]
+\end{equation}
+where we now define the value as 
+\begin{equation}
+    \J^{\pol}(\st) = \E_{\ac\sim\pol(\cdot\mid\st), \st'\sim p(\cdot\mid\st, \ac)}[\cost(\st,\ac) + \gamma \J^{\pol}(\st')].
+\end{equation}
 
-% Policy gradient theorem, REINFORCE
+To optimize this policy via gradient descent on the return, we turn to the policy gradient theorem. 
 
-% Deterministic Policy Gradient theorem, DDPG; non-distributional extensions to DDPG
+\theorem{Let $G(\param)$ denote the expected return of policy $\pol_{\param}$. Let $ \tau = (\st_0, \ac_0, \ldots, \st_T, \ac_T)$ denote a finite horizon trajectory generated by the dynamics of the environment and the policy, with density $p(\tau \mid \param)$. We will write the total cost associated with the trajectory $\tau$ as $\cost(\tau)$. Then,
+\begin{equation}
+\nabla_{\param} G(\param) = \E_{\tau \sim p(\cdot\mid \param)}[\cost(\tau) \sum_{t=0}^T \nabla_{\param} \log \pol_{\param}(\ac_t\mid \st_t)]    
+\end{equation}
+}
 
-% TRPO and PPO
+\proof{The proof proceeds via simple calculus and rearrangement of terms. We will use the identity 
+\begin{equation}
+ p_{\param}(\st) \nabla_{\param} \log p_{\param}(\st) = \nabla_{\param} p_{\param}(\st).
+\end{equation}
+
+Given this, we have 
+\begin{align}
+    \nabla_{\param} G(\param) &= \nabla_{\param} \E_{\tau \sim p(\cdot\mid \param)}[ \cost(\tau)] \nonumber\\
+    &= \nabla_{\param} \int p(\tau\mid \param) \cost(\tau) d\tau \nonumber\\
+    &= \int \cost(\tau ) \nabla_{\param} p(\tau\mid \param) d\tau \nonumber\\
+    &= \int \cost(\tau ) p(\tau\mid \param) \nabla_{\param} \log p(\tau\mid \param) d\tau \nonumber\\
+    &= \E_{\tau \sim p(\cdot\mid \param)}[ \cost(\tau) \nabla_{\param} \log p(\tau\mid \param)] \label{eq:polgrad1}.
+\end{align}
+Note that 
+\begin{equation*}
+    p(\tau\mid \param) = p(\st_0) \prod_{k=0}^{T-1} p(\st_{k+1} \mid \ac_k) \pol_{\param}(\ac_k \mid \st_k),
+\end{equation*}
+and thus 
+\begin{equation*}
+    \log p(\tau\mid \param) = \log p(\st_0) + \sum_{k=0}^{T-1} \Large{(} \log p(\st_{k+1} \mid \ac_k) + \log \pol_{\param}(\ac_k \mid \st_k) \Large{)}.
+\end{equation*}
+Moreover, note that all the terms in the above are independent of $\param$, with the exception of the policy. Thus, we have $\nabla_{\param} \log p(\tau\mid \param) = \sum_{k=0}^{T-1} \nabla_{\param} \log \pol_{\param}(\ac_k \mid \st_k)$. Plugging this into \eqref{eq:polgrad1} completes the proof.
+}
+
+By using Monte Carlo estimation of this gradient from experience (as opposed to Monte Carlo policy evaluation as in the last subsection), we can take (noisy) gradient descent steps on the total return to optimize the policy from experience. Indeed, note that on-policy behavior (i.e. acting in the real environment with actions drawn from $\pol_{\param}$ provides samples from $p(\tau\mid \param)$.
+
+% algorithm block
+
+% specific instantiation with gaussian policy 
 
 \section{Actor-Critic Methods}
+
+% general policy gradient theorem
 
 % A2C, A3C, other RL algorithms
 

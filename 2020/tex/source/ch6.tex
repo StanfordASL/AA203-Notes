@@ -40,9 +40,9 @@ Thus, the central question of this formulation becomes characterizing the behavi
 The rough structure of the online model predictive control framework is then as follows:
 \begin{enumerate}
     \item Measure the state $\st(t)$ at every time $t$
-    \item Obtain $U^*_0(\st(t)$ by solving finite-time optimal control problem
-    \item If $U^*_0(\st(t) = \emptyset$ then `problem infeasible', stop
-    \item Apply the first element $\ac^*_0$ of $U^*_0(\st(t)$ to the system
+    \item Obtain $U^*_0(\st(t))$ by solving finite-time optimal control problem
+    \item If $U^*_0(\st(t)) = \emptyset$ then `problem infeasible', stop
+    \item Apply the first element $\ac^*_0$ of $U^*_0(\st(t))$ to the system
     \item Wait for the new sampling time $t+1$
 \end{enumerate}
 This framework leads to two main implementation issues. First, the controller may lead us into a situation where after a few steps the finite-time optimal control problem is infeasible, which we refer to as the \textit{persistent feasibility issue}. Even if the feasibility problem does not occur, the generated control inputs may not lead to trajectories that converge to the origin, which we refer to as the \textit{stability issue}. The key question in the analysis of MPC algorithms is how we may guarantee that our ``short-sighted'' control strategy leads to effective long-term behavior. While one possible approach is directly analyzing the closed-loop dynamics, this is in practice very difficult. Our approach will instead be to derive conditions on the terminal function $\cost_f$ and terminal constraint set $\mathcal{X}_f$ so that the persistent feasibility and closed-loop stability are guaranteed. 
