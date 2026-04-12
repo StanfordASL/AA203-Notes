@@ -1,3 +1,3 @@
 # AA203: Optimal and Learning-based Control Course Notes
 
-This repository contains the in-progress course notes for the Spring 2020 version of AA203 at Stanford. If anything is unclear or incorrect, please raise an issue. 
+This repository contains the in-progress course notes for the AA203 course at Stanford University. If anything is unclear or incorrect, please raise an issue.

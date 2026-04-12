@@ -145,7 +145,7 @@ Shooting methods solve the discrete optimization problem via optimizing only ove
 
 \subsection{Sequential Convex Programming}
 
-Direct optimization of the discretized nonlinear control problem typically results in a non-convex optimization problem, for which finding a good solution may be difficult or impossible. The source of this non-convexity is typically the dynamics (and sometimes the cost function). The key idea of sequential convex programming (SCP) is to iterative re-linearize the dynamics (and construct a convex approximation of the cost function, if it is non-convex) around a nominal trajectory. 
+Direct optimization of the discretized nonlinear control problem typically results in a non-convex optimization problem, for which finding a good solution may be difficult or impossible. The source of this non-convexity is typically the dynamics (and sometimes the cost function). The key idea of sequential convex programming (SCP) is to iteratively re-linearize the dynamics (and construct a convex approximation of the cost function, if it is non-convex) around a nominal trajectory. 
 
 First, we will assume for this outline that the cost $\cost$ is convex. Let $(\st_0(\cdot),\ac_0(\cdot))$ be a nominal tuple of trajectory and control (which is not necessarily feasible). We linearize the dynamics around this trajectory:
 \begin{equation}
