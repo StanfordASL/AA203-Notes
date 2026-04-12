@@ -243,7 +243,7 @@ We will sketch two possible proofs for the NOC for equality constrained optimiza
 
 \paragraph{Penalty approach.} This approach relies on adding a to the cost function a large penalty term for constraint violation. This is the same approach that will be used in proving the necessary conditions for inequality constrained optimization, and is the basis of a variety of practical numerical algorithms. 
 
-\paragraph{Elimination approach.} This approach views the constraints as a system of $m$ equations with $n$ unknowns, for which $m$ variables can be expressed in terms of the remaining $m-n$ variables. This reduces the problem to an unconstrained optimization problem. 
+\paragraph{Elimination approach.} This approach views the constraints as a system of $m$ equations with $n$ unknowns, for which $m$ variables can be expressed in terms of the remaining $n-m$ variables. This reduces the problem to an unconstrained optimization problem. 
 
 Note that in theorem \ref{thm:eq_con_NOC}, we assumed the gradients of the constraint functions were linearly independent. A feasible vector for which this holds is called \textit{regular}. If this condition is violated, a Lagrange multiplier for a local minimum may not exist. 
 
